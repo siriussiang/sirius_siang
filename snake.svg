@@ -1,139 +1,26 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="465" height="465"><title>Snake (with touch)</title>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="156" height="249">
 <style>
-svg{border:31px solid #ccc;}
-.snake {fill: #000;}
-.apple {fill: #f00;}
-.game-over {border-color: #fcc;}
+polygon{
+fill:white;
+stroke:black;
+stroke-width:3px;
+transition:500ms}
+
+polygon:hover{
+fill:blue;
+fill-opacity:0.25;
+stroke:blue}
+
+polygon:active{
+fill:red;
+fill-opacity:0.25;
+stroke:red}
+
+text{
+font-family:文鼎粗行楷,標楷體;
+font-size:80px;
+text-anchor:middle}
 </style>
-<script><![CDATA[
-var svg=document.getElementsByTagNameNS('http://www.w3.org/2000/svg','svg').item(0),
-rectSize = 31,
-matrixSize = 15,
-matrixLimit = matrixSize - 1;
-speedMs = 250;
-var currentX = -1,
-currentY = 0,
-nextMoveX = 1,
-nextMoveY = 0,
-snakeL = 5,
-swipe = 0,
-rectArray = [];
-gameIsOver = false;
-function drawPoint(x, y) {
-var rect = [document.createElementNS('http://www.w3.org/2000/svg','rect'), x, y];
-var rectObj = rect[0];
-rectObj.setAttributeNS(null, 'x', x * rectSize);
-rectObj.setAttributeNS(null, 'y', y * rectSize);
-rectObj.setAttributeNS(null, 'height', rectSize);
-rectObj.setAttributeNS(null, 'width', rectSize);
-rectObj.setAttributeNS(null, 'class', 'snake');
-rectArray.push(rect);
-svg.appendChild(rectObj);
-if (rectArray.length > snakeL) {
-svg.removeChild(rectArray[0][0]);
-rectArray.shift();
-}
-}
-function setApple() {
-var appleX = Math.floor((Math.random() * matrixSize)),	
-appleY = Math.floor((Math.random() * matrixSize));
-apple = [document.createElementNS('http://www.w3.org/2000/svg','rect'), appleX, appleY];
-var thisApple = apple[0];
-thisApple.setAttributeNS(null, 'x', appleX * rectSize);
-thisApple.setAttributeNS(null, 'y', appleY * rectSize);
-thisApple.setAttributeNS(null, 'height', rectSize);
-thisApple.setAttributeNS(null, 'width', rectSize);
-thisApple.setAttributeNS(null, 'class', 'apple');
-svg.appendChild(thisApple);
-}
-function gameOver() {
-svg.setAttributeNS(null, 'class', 'game-over');
-clearInterval(timing);
-alert('GAME OVER!\nYour result is ' + snakeL + '!');
-gameIsOver = true;
-return;
-}
-function controllingSnake() {
-var nextX = currentX + nextMoveX,
-nextY = currentY + nextMoveY;
-rectArray.forEach(function(element){
-if(nextX === element[1] && nextY === element[2])gameOver();
-});
-if (nextY < 0 || nextY > matrixLimit || nextX < 0 || nextX > matrixLimit) {
-gameOver();
-}
-if (!gameIsOver) {
-if(currentX === apple[1] && currentY === apple[2]){snakeL++;svg.removeChild(apple[0]);setApple();}
-drawPoint(nextX, nextY);
-currentX = nextX;
-currentY = nextY;
-}
-}
-var timing = setInterval(controllingSnake, speedMs);
-function changeDirection(dirCode) {
-switch (dirCode) {
-case 37:
-if (nextMoveX !== 1) {
-nextMoveX = -1;
-nextMoveY = 0;
-}
-break;
-case 38:
-if (nextMoveY !== 1) {
-nextMoveX = 0;
-nextMoveY = -1;	
-}
-break;
-case 39:
-if (nextMoveX !== -1) {
-nextMoveX = 1;
-nextMoveY = 0;
-}
-break;
-case 40:
-if (nextMoveY !== -1) {
-nextMoveX = 0;
-nextMoveY = 1;	
-}
-}
-}
-document.onkeydown=function(evt){
-var evt = evt || event;
-evt.preventDefault();
-changeDirection(evt.keyCode);
-}
-function is_touch_device() {
-return (('ontouchstart' in window)
-|| (navigator.MaxTouchPoints > 0)
-|| (navigator.msMaxTouchPoints > 0));
-}
-function startup() {
-if (is_touch_device()) {
-tStartX = null;
-tStartY = null;
-document.body.addEventListener("touchstart", handleStart, false);
-document.body.addEventListener("touchend", handleEnd, false);	
-} else {
-console.log('Is not touch device');
-}
-}
-function handleStart(evt) {
-evt.preventDefault();
-tStartX = evt.touches[0].screenX;
-tStartY = evt.touches[0].screenY;
-}
-function handleEnd(evt) {
-evt.preventDefault();
-var tEndX = evt.changedTouches[0].screenX,
-tEndY = evt.changedTouches[0].screenY,
-totalX = tStartX - tEndX,
-totalY = tStartY - tEndY;
-if (Math.abs(totalX) > Math.abs(totalY)) {
-swipe = (totalX >= 0) ? 37 : 39;
-} else {
-swipe = (totalY >= 0) ? 38 : 40;
-}
-changeDirection(swipe);
-}
-setApple();
-]]></script></svg>
+<polygon points="2,247 35,29 78,2 121,29 154,247"/>
+<text x="78" y="140">帝</text>
+</svg>
