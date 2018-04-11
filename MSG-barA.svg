@@ -1,8 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="4">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="540" height="46">
+<style>
+text{
+fill: white;
+font-size: x-small;
+font-family: "Helvetica Neue", Helvetica, Roboto, Arial, "Lucida Grande", "PingFang TC", "蘋果儷中黑", "Apple LiGothic Medium", sans-serif;
+}
+line{
+stroke: #006600;
+stroke-width: 1px;
+stroke-dasharray:1 1;
+fill:#999999;
+}
+</style>
 <defs>
-<pattern id="pattern1" width="1" height="345" patternUnits="userSpaceOnUse">
-<image y="-159" xlink:href="http://i2.bahamut.com.tw/imgx.gif"/>
+<pattern id="barA" width="1" height="4" patternUnits="userSpaceOnUse">
+<image width="1" height="4" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2PY71nzn+HnxUf/Gb7MOvifAcQFAHfKDABM55RHAAAAAElFTkSuQmCC"/>
+</pattern>
+<pattern id="barB" width="1" height="4" patternUnits="userSpaceOnUse">
+<image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2Nwn3PoP8ONV5/+M6y+9Pg/A4gLAHlXDFvWqZyAAAAAAElFTkSuQmCC"/>
+</pattern>
+<pattern id="barC" width="1" height="4" patternUnits="userSpaceOnUse">
+<image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2NwO7z9P8ONTx/+M6x+cv8/A4gLAHxmDKWImEtGAAAAAElFTkSuQmCC"/>
 </pattern>
 </defs>
-<rect width="500" height="4" fill="url(#pattern1)"/>
+<line x1="0" y1="0" x2="540" y2="0"/>
+<text x="0" y="13">HP：</text>
+<rect x="30" y="8" width="500" height="4" fill="url(#barA)"/>
+<text x="0" y="28">MP：</text>
+<rect x="30" y="23" width="500" height="4" fill="url(#barB)"/>
+<text x="0" y="43">EXP：</text>
+<rect x="30" y="38" width="500" height="4" fill="url(#barC)"/>
 </svg>
