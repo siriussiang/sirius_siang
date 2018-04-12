@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="543" height="46">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="542" height="46">
 <style>
 text{
 fill: white;
@@ -15,14 +15,14 @@ stroke-dasharray:1 1;
 <pattern id="barA" width="1" height="4" patternUnits="userSpaceOnUse">
 <image width="1" height="4" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2PY71nzn+HnxUf/Gb7MOvifAcQFAHfKDABM55RHAAAAAElFTkSuQmCC"/>
 </pattern>
-<pattern id="barB" width="1" height="4" patternUnits="userSpaceOnUse">
+<pattern id="barB" y="3" width="1" height="4" patternUnits="userSpaceOnUse">
 <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2Nwn3PoP8ONV5/+M6y+9Pg/A4gLAHlXDFvWqZyAAAAAAElFTkSuQmCC"/>
 </pattern>
-<pattern id="barC" width="1" height="4" patternUnits="userSpaceOnUse">
+<pattern id="barC" y="2" width="1" height="4" patternUnits="userSpaceOnUse">
 <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2NwO7z9P8ONTx/+M6x+cv8/A4gLAHxmDKWImEtGAAAAAElFTkSuQmCC"/>
 </pattern>
 </defs>
-<line x1="10" y1="0" x2="543" y2="0"/>
+<line x1="10" y1="0" x2="542" y2="0"/>
 <text x="10" y="13">HP：</text>
 <rect x="40" y="8" width="500" height="4" fill="url(#barA)"/>
 <text x="10" y="28">MP：</text>
