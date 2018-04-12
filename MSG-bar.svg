@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="540" height="46">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="550" height="46">
 <style>
 text{
 fill: white;
@@ -22,11 +22,11 @@ stroke-dasharray:1 1;
 <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAYAAABP2FU6AAAAG0lEQVQYV2NwO7z9P8ONTx/+M6x+cv8/A4gLAHxmDKWImEtGAAAAAElFTkSuQmCC"/>
 </pattern>
 </defs>
-<line x1="0" y1="0" x2="540" y2="0"/>
-<text x="0" y="13">HP：</text>
-<rect x="30" y="8" width="500" height="4" fill="url(#barA)"/>
-<text x="0" y="28">MP：</text>
-<rect x="30" y="23" width="500" height="4" fill="url(#barB)"/>
-<text x="0" y="43">EXP：</text>
-<rect x="30" y="38" width="500" height="4" fill="url(#barC)"/>
+<line x1="10" y1="0" x2="550" y2="0"/>
+<text x="10" y="13">HP：</text>
+<rect x="40" y="8" width="500" height="4" fill="url(#barA)"/>
+<text x="10" y="28">MP：</text>
+<rect x="40" y="23" width="500" height="4" fill="url(#barB)"/>
+<text x="10" y="43">EXP：</text>
+<rect x="40" y="38" width="500" height="4" fill="url(#barC)"/>
 </svg>
