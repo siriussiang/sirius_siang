@@ -1,0 +1,79 @@
+<html><head><title>巴哈圖片搜尋</title><style>
+body{
+background-attachment:fixed;
+background-position:0px 0px,16px 16px;
+background-size:32px 32px;
+background-image:linear-gradient(to top right,#DDD 25%,transparent 25%,transparent 75%,#DDD 75%),linear-gradient(to top right,#DDD 25%,#EEE 25%,#EEE 75%,#DDD 75%);
+text-align:center;}
+div{display:inline-block;width:25%;vertical-align:top}
+img{width:100%}
+.stop{position:fixed;right:0px;top:0px;width:auto}
+</style></head><body><input type="search" list="dtl"><datalist id="dtl"><option value="小說王"></datalist><hr><img src="http://img.linedeco.campmobile.net/downloads/ios/icon_title_delete2.png" title="停止" class="stop"><script>
+
+var getList=new XMLHttpRequest(),
+getArt=new XMLHttpRequest(),
+par=new DOMParser(),
+doc,
+img,
+圖片i=0,
+繼續,
+圖片=new Array(),
+list=new Array(),
+listI=0,
+page,
+column=4,
+keyword;
+
+
+getList.onreadystatechange=function(){if(this.readyState==4){
+if(this.status>299)console.log(this.statusText);else{
+
+var addList=JSON.parse(this.response).list;
+
+list=list.concat(addList);
+
+if(繼續){
+if(addList.length>29){
+this.open('GET','https://api.gamer.com.tw/mobile_app/forum/v1/B.php?bsn=60076&keyword='+keyword+'&page='+(++page)+'&ltype=');
+this.send();
+}else{
+listI=0;
+getArt.open('GET','https://api.gamer.com.tw/mobile_app/forum/v1/C_webview.php?bsn='+list[0].bsn+'&snA='+list[0].snA+'&topicOnly='+Boolean(Math.round(Math.random())));
+getArt.send();
+}}
+
+;}}}
+
+
+
+
+
+
+getArt.onreadystatechange=function(){if(this.readyState==4){
+if(this.status>299)console.log(this.statusText);else{
+
+doc=par.parseFromString(JSON.parse(this.response).html,"text/html");
+
+if(doc.getElementsByClassName('photoview').length){
+for(let p of doc.getElementsByClassName('photoview')){
+img=document.createElement('img');
+圖片.push(img.src=p.dataset.src);
+
+document.getElementsByTagName('div')[圖片i++%column].appendChild(img);}}
+
+if(++listI<list.length&&繼續){
+this.open('GET','https://api.gamer.com.tw/mobile_app/forum/v1/C_webview.php?bsn='+list[listI].bsn+'&snA='+list[listI].snA+'&topicOnly='+Boolean(Math.round(Math.random())));
+this.send();}
+
+}}}
+
+
+document.getElementsByTagName('input')[0].onchange=function(){
+繼續=true;keyword=this.value;page=1;
+getList.open('GET','https://api.gamer.com.tw/mobile_app/forum/v1/B.php?bsn=60076&keyword='+keyword+'&page=1&ltype=');
+getList.send();
+for(let i=0;i<column;i++)document.body.insertBefore(document.createElement('div'),document.getElementsByTagName('script')[0]);}
+
+
+document.getElementsByClassName('stop')[0].onclick=function(){繼續=false;this.parentNode.removeChild(this);}
+</script></body></html>
