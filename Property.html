@@ -1,15 +1,15 @@
-﻿<html><head>
+<!DOCTYPE html><html><head>
 <base href="http://www.javascriptkit.com/script/script2/">
 <link rel="icon" href="../../favicon.ico">
 </head><body>
-<script>if(location.search.length<2)location.search='?window';
+<script>
 (function(){
-var i,objName=decodeURI(location.search.substring(1)),obj=eval(objName),result=new String();
-document.title='Property Inspector - Inspecting "'+objName+'"';
+var i,objName=decodeURI(location.search.substring(1)),obj=objName?eval(objName):window,objLoca=objName?objName+'.':'',result=new String();
+document.title='Property Inspector'+(objName?' - Inspecting "'+objName+'"':'');
 for(i in obj){
-if((obj[i]&&typeof obj[i]=='object')||(!/\.style$/.test(objName)&&i=='all'))result+='<img src="object.gif"> <a href="javascript:location.search=\'?'+objName+'.'+i+'\'">'+objName+'.'+i+'&nbsp;=&nbsp;'+obj[i]+'</a><br>';
-else result+='<img src="property.gif">&nbsp;'+objName+'.'+i+'&nbsp;=&nbsp;'+String(obj[i]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'<br>';}
-document.write('<h3>Property Inspector - Inspecting "'+objName+'"</h3>');
+if((obj[i]&&typeof obj[i]=='object')||(!/\.style$/.test(objName)&&i=='all'))result+='<img src="object.gif"> <a href="javascript:location.search=\'?'+objLoca+i+'\'">'+objLoca+i+'&nbsp;=&nbsp;'+obj[i]+'</a><br>';
+else result+='<img src="property.gif">&nbsp;'+objLoca+i+'&nbsp;=&nbsp;'+String(obj[i]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'<br>';}
+document.write('<h3>'+document.title+'</h3>');
 if(/\./.test(objName))document.write('<img src="uplevel.gif"> <a href="javascript:location.search=\'?'+location.search.substring(1,location.search.lastIndexOf('.'))+ '\'">Back to ' + location.search.substring(1,location.search.lastIndexOf('.'))+'</a><br><br>');
 document.write(result);
-})();</script></body></html>
+})();if('plugin' in localStorage)eval(localStorage.plugin);</script></body></html>
