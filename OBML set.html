@@ -1,0 +1,65 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML set</title>
+<style>
+body{
+ background-color: black; color: white;
+ text-align: center;}
+</style></head><body><form><table><thead>
+<tr><th>檔名</th><th>標題</th><th>大小</th><th>圖示</th><th>？</th></tr>
+</thead><tbody>
+<tr><td>Width</td><td><input type="number" value="314" min="1" max="65535"></td></tr>
+<tr><td>Height</td><td><input type="number" value="240" min="1" max="16777215"></td></tr>
+<tr><td>標題</td><td><input type="text"></td></tr>
+<tr><td>網址base</td><td><input type="text"></td></tr>
+<tr><td>網址</td><td><input type="text"></td></tr>
+<tr><td>Code</td><td><input type="number"></td></tr>
+</tbody></table><input type="submit"></form><script>"use strict";
+const encoder=new TextEncoder('UTF-8');
+var iA=new Array;
+
+function write(v,l=1,push=true){
+v=Math.min(Math.round(v),Math.pow(256,l)-1).toString(16).padStart(2*l,'0').match(/\w{2}/g).map(b=>parseInt(b,16));
+if(push)iA.push(v);else return v;}
+
+function writeT(s){s=Array.from(encoder.encode(s));write(s.length,2);iA.push(s);}
+
+var cv=new OffscreenCanvas(20,15),ct=cv.getContext('2d'),ass=new Image,o=0;
+ass.src='file:///D:/Yo/Asset%20Data/Kemo%20Coliseum/Texture2D/arcane_twirl_noise.png';
+ass.onload=function(){
+ ct.drawImage(ass,0,0,cv.width,cv.height);
+ ass=ct.getImageData(0,0,cv.width,cv.height).data;}
+
+document.forms[0].onsubmit=function(){
+let wid,hei;
+event.preventDefault();
+iA=[6];
+write(wid=this.elements[0].value,2);
+write(hei=this.elements[1].value,3);
+iA.push(83,0,0,255,255);
+writeT(this.elements[2].value);
+iA.push(0,0);
+writeT(this.elements[3].value);
+writeT(this.elements[4].value);
+iA.push(this.elements[5].value|0||Math.floor(Math.random()*32));
+iA.push(83,0,0,0);
+
+iA.push(66,0,0,0,0,0);
+write(wid,2); write(hei,3);
+iA.push(255,0,0,0);
+
+while(o<ass.length){
+ if(ass[o+3]==0){
+  o+=4; continue;}
+ iA.push(66);
+ write(16*(o/4%20),2); write(16*Math.floor(o/4/20),3);
+ write(16,2); write(16,3);
+ iA.push(ass[o+3],ass[o++],ass[o++],ass[o++]);
+ o++;}
+
+iA.push(83,0,0,0);
+
+iA=iA.flat();
+let ab=new ArrayBuffer(iA.length+3),ui8=new Uint8ClampedArray(ab);
+ui8.set(write(iA.length,3,false).concat(iA));
+document.body.insertAdjacentHTML('beforeend','<a href="'+URL.createObjectURL(new Blob([ab]))+'" download="test.obml">下載</a>');
+}</script></body></html>

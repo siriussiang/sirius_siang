@@ -1,0 +1,143 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Opera binary markup language</title>
+<style>
+body{
+ background: black; color: white;
+ font-family: monospace;
+ text-align: justify;}
+td:nth-of-type(2){
+ white-space: nowrap;
+ word-break: keep-all;}
+td:nth-of-type(3){
+ word-break: break-all;}
+</style>
+</head><body><input type="file"><table><thead><tr><th>位置</th></tr></thead><tbody></tbody></table><script>
+
+var inputs=document.getElementsByTagName('input'),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,iA,o=0,star=new Array,textReader=new FileReader,s=0,logs=new Array;
+
+function readB(){return iA[o++];}
+
+function read(l){return parseInt(Array.from(iA.slice(o,o+=l)).map(byte=>byte.toString(16).padStart(2,'0')).join(''),16);}
+
+function readL(t){
+ let i,l=iA[o++],ts='['+read(2)+','+read(3)+','+read(2)+','+read(3)+']';
+ for(i=1;i<l;i++)ts+=',['+read(2)+','+read(3)+','+read(2)+','+read(3)+']';
+ log(o-2-10*l,t+' 位置長寬',ts);
+ logS(o,t+'-link-type');
+ logS(o,t+'-link');}
+
+function readC(){
+let a=iA[o++]==255?'':iA[o-1].toString(16).padStart(2,'0');
+return '#'.concat(iA[o++].toString(16).padStart(2,'0'),iA[o++].toString(16).padStart(2,'0'),iA[o++].toString(16).padStart(2,'0'),a).toUpperCase();}
+
+function log(...strings){logs.push(strings.flat());}
+
+function logS(...string){
+let si=read(2);
+if(si)star.push([string,o,o+=si]);}
+
+function createImage(){
+let is=read(2); if(is){
+let img=document.createElement('img');
+img.dataset.offset=o-2;
+img.src=URL.createObjectURL(inputs[0].files[0].slice(o,o+=is));
+img.dataset.size=is;
+document.body.appendChild(img);}}
+
+function jump(){o=read(2)+o;}
+
+inputs.item(0).onchange=function(){if(this.files.length)reader.readAsArrayBuffer(this.files[0]);}
+
+reader.onload=function(){iA=new Uint8Array(this.result);o=0;s=0;
+log(o,'檔案大小（接著的byte數）',read(3));
+log(o,'版本（檔案由此開始）',readB());
+log(o,'Width',read(2));
+log(o,'Height',read(3));
+o+=5;
+logS(o,'標題');
+jump();
+logS(o,'網址base');
+logS(o,'網址');
+log(o,'頁面類型',readB());
+
+let 繼續=true;
+while(o<inputs[0].files[0].size&&繼續)switch(readB()){
+case  77://M
+ switch(readB()){
+ case  83://S
+  o+=3; jump();
+  logS(o,'憑證持有人'); logS(o,'憑證發行人');
+  logS(o,'過期日'); logS(o,'資訊');
+  logS(o,'憑證類型'); logS(o,'網域');
+ break;case  67://C
+  log(o-2,'MC','未知，跳過');
+  o++; jump();
+ break;case 117://u
+  log(o-2,'Mu','未知，跳過');
+  o++; jump();
+ break;case  84://T
+  log(o-2,'MT','未知，跳過');
+  o++; jump();
+ break;case 115://s
+  log(o-2,'Ms','未知，跳過');
+  o++; jump();
+ break;default:
+  log(o-2,String.fromCodePoint(iA[o-1]).replace(/\0/g,'\u2400'),'未知M類資料');繼續=false;}
+break;case  83://S
+ if(o>s){
+ if(s<1){s=read(3)+o;log(o-4,'下一區塊開始位置',s);}
+ else{var sis=read(3),sEnd=o+sis;log(o-4,'S 區塊大小',sis);while(o<sEnd)createImage();}}
+ else readL('S');
+break;case  73://I
+ if(o<s)readL('I');
+ else log(o-1,'Image','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC()+' '+read(3)+','+read(3));
+break;case  76://L
+ if(o<s)readL('L');
+ else{log(o-1,'L','未知，跳過'); o+=9;}
+break;case   0://null
+ var nullL=read(2);
+ log(o-3,'\u2400 數量',nullL);
+ for(var i=0;i<nullL;i++){logS(o,'\u2400 代號');logS(o,'\u2400 標籤');}
+break;case  67://C
+ readL('C');
+break;case  78://N
+ readL('N');
+break;case  80://P
+ readL('P');
+break;case  87://W
+ readL('W');
+break;case 105://i
+ readL('i');
+break;case 119://w
+ readL('w');
+break;case  66://B
+ log(o-1,'Box','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC());
+break;case  70://F
+ log(o-1,'Form 位置長寬顏色','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC());
+ log(o,'Form 類型',String.fromCodePoint(readB())+readB());
+ logS(o,'Form'); logS(o,'Form value');
+ o+=3;
+break;case  84://T
+ log(o-1,'Text 位置長寬樣式','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC()+' '+readB());
+ logS(o,'Text');
+break;case 111://o
+ log(o-1,'o','未知，跳過'); jump();
+break;case 122://z
+ log(o-1,'z','未知，跳過'); o+=6;
+break;default:log(--o,String.fromCodePoint(readB()).replace(/\0/g,'\u2400'),'未知資料');繼續=false;}
+
+
+
+textReader.readAsText(inputs.item(0).files[0].slice(star[0][1],star[0][2]));
+}
+
+textReader.onload=function(){
+log(star.shift()[0],this.result.replace(/\0+/g,'\u2400'));
+if(star.length)textReader.readAsText(inputs.item(0).files[0].slice(star[0][1],star[0][2]));
+else{
+ logs=logs.sort((a,b)=>a[0]-b[0]);
+ for(let i of logs){let row=tBody.insertRow(-1);
+ for(let j of i)row.insertCell(-1).appendChild(document.createTextNode(j));
+}}}
+
+</script></body></html>

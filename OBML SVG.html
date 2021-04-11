@@ -1,0 +1,192 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML SVG</title>
+<style>
+body{
+ background-color: black; color: white;
+ font-family: FranklinUp,sans-serif,微軟正黑體;
+ text-align: center;}
+svg{
+ background-color: white;
+ /*max-width: -webkit-fill-available;*/}
+details{ text-align: start;}
+.hide{ display: none;}
+.fledge{
+ position: fixed;
+ z-index:1;
+ background-color: RGBA(0,0,0,50%);
+ border-top-right-radius: 8px;
+ border-bottom-right-radius: 8px;
+ opacity:0.5;
+ transition-duration:15s}
+.fledge[open]{
+ border-top-right-radius: 16px;
+ border-bottom-right-radius: 16px;
+ max-width: 40%}
+.fledge:hover{
+ opacity:1;
+ transition-duration:1s}
+ol{ list-style-type: trad-chinese-formal;}
+li{ cursor: pointer;}
+li:hover{
+ text-decoration-line: underline;
+ list-style-type: trad-chinese-informal;}
+@font-face{
+ font-family:FranklinUp;
+ src:local("Franklin Gothic Book");
+ unicode-range:U+41-5A}
+@font-face{
+ font-family:FranklinUp;
+ src:local("Franklin Gothic");
+ unicode-range:U+41-5A;
+ font-weight: bold;}
+</style></head><body><input type="file" multiple accept=".obml"><label><input type="checkbox">invert color</label><br><details draggable="true" class="hide"><ol></ol></details><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>
+text{ dominant-baseline: text-before-edge;}
+.bold{ font-weight: bold;}
+.small{ font-size: 16px;}
+.medium{ font-size: 20px;}
+.large{ font-size: 24px;}
+</style></svg><script>"use strict";
+const NS='http://www.w3.org/2000/svg',[input,ivCheck]=document.getElementsByTagName('input'),detail=document.getElementsByTagName('details').item(0),detailClass=detail.classList,ol=document.getElementsByTagName('ol').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var svg=document.getElementsByTagNameNS(NS,'svg').item(0),uA,dV,o=0,imgURL=new Object,lineHeight=25,baseCC=svg.childNodes.length,invert=false/*,inverted=false*/;
+var fileI=new Number,isDir,hue=Math.floor(Math.random()*360);
+
+function read(l){
+ if(l==2)return dV.getUint16((o+=2)-2);
+ if(l==3)return uA[o++]<<16|uA[o++]<<8|uA[o++];
+ /*return parseInt(Array.from(uA.subarray(o,o+=l)).map(byte=>byte.toString(16).padStart(2,'0')).join(''),16)*/}
+
+function readColor(){
+ let 紅=uA[o++],綠=uA[o++],藍=uA[o++];
+ if(!invert)return '#'.concat(紅.toString(16).padStart(2,'0'),綠.toString(16).padStart(2,'0'),藍.toString(16).padStart(2,'0')).toUpperCase();
+ if(Math.max(紅,綠,藍)==Math.min(紅,綠,藍))return '#'.concat((255-紅).toString(16).padStart(2,'0').repeat(3)).toUpperCase();
+ 紅/=255,綠/=255,藍/=255;
+ let 大=Math.max(紅,綠,藍),小=Math.min(紅,綠,藍),和=大+小,差=大-小;
+ let 紅Δ=紅/6/差,綠Δ=綠/6/差,藍Δ=藍/6/差,H,L=和/2,S=L<=1/2?差/和:差/(2-和);
+ switch(大){case 紅:H=綠Δ-藍Δ;
+  break;case 綠:H=1/3+藍Δ-紅Δ;
+  break;case 藍:H=2/3+紅Δ-綠Δ;}
+ if(H<0)H++;
+ return 'hsl('+Math.floor(360*H%360)+','+Math.round(S*100)+'%,'+Math.round((1-L)*100)+'%)';}
+
+function readText(){return decodeUTF8(uA.subarray(o+2,o=read(2)+o))}
+
+function jump(b,c=1){for(let i=0;i<c;i++)o=read(b)+o;}
+
+function createRect(x,y,widt,heig,opac,fill){
+ let rect=document.createElementNS(NS,'rect');
+ rect.setAttribute('x',x);        rect.setAttribute('y',y);
+ rect.setAttribute('width',widt); rect.setAttribute('height',heig);
+ if(opac<255)rect.setAttribute('fill-opacity',(opac/255).toFixed(6).replace(/\.?0+$/,''));
+ rect.setAttribute('fill',fill);
+ svg.appendChild(rect)};
+
+function liClick(){readFile(this.dataset.index);}
+
+function readFile(fi){
+ invert=ivCheck.checked;
+ for(let i in imgURL){URL.revokeObjectURL(imgURL[i]);delete imgURL[i];}
+ isDir=false; fileI=fi;
+ reader.readAsArrayBuffer(input.files[fi]);}
+
+input.onchange=function(){
+ while(ol.childElementCount)ol.removeChild(ol.childNodes[0]);
+ if(this.files.length==1)readFile(0);
+ if(this.files.length>1){
+  isDir=true;
+  fileI=0;
+  reader.readAsArrayBuffer(this.files[0].slice(0,4096));
+  detailClass.remove('hide');}
+ else detailClass.add('hide');}
+
+reader.onload=function(){
+uA=new Uint8Array(this.result);
+dV=new DataView(this.result);
+if(isDir){
+ let li=document.createElement('li');
+ o=14;
+ li.dataset.index=fileI;
+ li.appendChild(document.createTextNode(readText()));
+ li.title=input.files[fileI].name.replace(/\.obml$/i,' '+input.files[fileI].lastModifiedDate.toLocaleString());
+ li.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,93.75%)';
+ ol.appendChild(li);
+ if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI]/*.slice(0,4096)*/);
+ else for(let i=0;i<input.files.length;++i)ol.children[i].onclick=liClick;}
+else{
+o=3;
+let gc=svg.childElementCount,vers=uA[o++],w=read(2),h=read(3);
+svg.setAttribute('width',w);
+svg.setAttribute('height',h);
+svg.setAttribute('viewBox','0 0 '+w+' '+h);/*[0,0,w,h].join(' ')、'0 0 '.concat(w,' ',h)*/
+svg.setAttribute('preserveAspectRatio','xMidYMin');
+o+=5;
+document.title=readText();
+jump(2,3); o++;
+if(vers>=13){o++;var iso=read(3)};
+
+let img,text,iX,iY,iW,iH,iBC,iZ,iO,content,tspan,tX,iSize;
+while(o<input.files[fileI].size)switch(uA[o++]){
+case 77: o++; jump(3);
+break;case 83: jump(3);
+break;case 66:
+
+ createRect(read(2),read(3),read(2),read(3),uA[o++],readColor());
+
+break;case 70: o+=16; jump(2,2); o+=3;
+break;case 73:
+
+ [iX,iY,iW,iH,iBC,iZ,iO]=[read(2),read(3),read(2),read(3),[uA[o++],readColor()],o+=3,read(3)];
+ if(vers>=13)iO+=iso;
+ if(iSize=dV.getUint16(iO+3)){
+  if(!(iO in imgURL)){
+   let blob;
+   if(dV.getUint16(iO+5)==65496)blob=input.files[fileI].slice(iO+5,iO+5+iSize,'image/jpeg');
+   else if(dV.getUint32(iO+5)==0x89504E47)blob=input.files[fileI].slice(iO+5,iO+5+iSize,'image/png');
+   else blob=input.files[fileI].slice(iO+5,iO+5+iSize);
+   imgURL[iO]=URL.createObjectURL(blob);}
+  img=document.createElementNS(NS,'image');
+  img.setAttribute('x',iX);     img.setAttribute('y',iY);
+  img.setAttribute('width',iW); img.setAttribute('height',iH);
+  img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',imgURL[iO]);
+  img.setAttribute('preserveAspectRatio','none');
+  svg.appendChild(img);}
+ else createRect(iX,iY,iW,iH,iBC[0],iBC[1]);
+
+break;case 76: o+=9;
+break;case 84:
+
+ text=document.createElementNS(NS,'text');
+ tX=read(2);
+ text.setAttribute('x',tX); text.setAttribute('y',read(3));
+ o+=5;
+ if(uA[o++]<255)text.setAttribute('fill-opacity',(uA[o-1]/255).toFixed(6).replace(/\.?0+$/,''));
+ text.setAttribute('fill',readColor());
+ switch(uA[o]>>1){/*[uA[o]-uA[o]%2,uA[o]&6]:[0,2,4]*/
+  case 0: text.classList.add('small'); lineHeight=17; break;
+  case 1: text.classList.add('medium');lineHeight=21; break;
+  case 2: text.classList.add('large'); lineHeight=25; }
+ if(uA[o++]&1)text.classList.add('bold');
+ content=readText().split('\n');
+ text.appendChild(document.createTextNode(content[0]));
+ for(let i=1;i<content.length;i++){
+  tspan=document.createElementNS(NS,'tspan');
+  tspan.setAttribute('x',tX);
+  tspan.setAttribute('dy',lineHeight);
+  tspan.appendChild(document.createTextNode(content[i]));
+  text.appendChild(tspan)};
+ svg.appendChild(text);
+
+break;case 111: jump(2);
+break;case 122: o+=6;
+break;default:console.log(o-1,String.fromCodePoint(uA[o-1]),'未知資料');o=input.files[fileI].size};
+/*inverted=invert;*/
+for(let i=baseCC;i<gc;i++)svg.removeChild(svg.childNodes[baseCC])}};
+
+ivCheck.onchange=function(){
+ document.styleSheets[0].rules[1].style.backgroundColor=this.checked?'black':'white';
+ /*if(this.checked==inverted)svg.style.removeProperty('filter');
+   else svg.style.filter='invert(1) hue-rotate(180deg)'*/}
+
+detail.ondragend=function(){ this.classList.toggle('fledge')}
+
+if(input.files.length){input.onchange();ivCheck.onchange();}
+</script></body></html>

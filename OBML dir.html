@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML Dirctory</title>
+<style>
+body{
+ background-color: black; color: white;
+ text-align: center;
+ font-family: sans-serif;}
+table{
+ width: 100%;}
+td:nth-of-type(2){
+ white-space: pre-wrap;}
+td:nth-of-type(3){
+ white-space: nowrap;}
+</style></head><body><input type="file" multiple accept=".obml"><table><thead><tr><th>檔名</th><th>標題</th><th>大小</th><th>版本</th><th>？</th><th>圖示</th></tr></thead><tbody></tbody></table><script>
+const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var fileI=new Number,uA,o=0,row,hue=Math.floor(Math.random()*360);
+
+function read(bl){
+ let r=0;
+ while(bl>0)r|=uA[o++]<<(--bl<<3);
+ return r}
+
+function append(v){row.insertCell(-1).appendChild(document.createTextNode(v))}
+
+input.onchange=function(){fileI=0;if(this.files.length)reader.readAsArrayBuffer(this.files[0].slice(0,16400))}
+
+reader.onload=function(){
+ uA=new Uint8Array(this.result);
+ row=tBody.insertRow(-1);
+ o=0;
+ let size=read(3),version=uA[o++];
+ o=14;
+ let titolo=decodeUTF8(uA.subarray(16,o=read(2)+o)),iconSize=read(2),cell;
+ o+=iconSize; o=read(2)+o; o=read(2)+o;
+
+ if(size>=1024)size=Math.ceil(size/1024).toLocaleString()+'㎅';
+ else size=size.toLocaleString();
+
+ append(input.files[fileI].name.replace(/\.obml$/i,''));
+ append(titolo);
+ append(size);
+ append(version);
+ append(uA[o]);
+ if(iconSize)append(iconSize);
+ else row.insertCell(-1);
+ row.title=input.files[fileI].lastModifiedDate.toLocaleString();
+ row.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,90%)';
+
+ if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI].slice(0,16400))}
+
+if(input.files.length)input.onchange();
+</script></body></html>

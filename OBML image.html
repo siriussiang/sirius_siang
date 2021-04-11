@@ -1,0 +1,68 @@
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>OBML image</title>
+<style>
+body{
+ background-color: black; color: white;
+ text-align: center;}
+canvas{
+ background-color: white;
+ max-width: -webkit-fill-available;}
+</style></head><body><input type="file" accept=".obml"><br><canvas></canvas><script>
+const input=document.getElementsByTagName('input').item(0),cv=document.getElementsByTagName('canvas').item(0),reader=new FileReader;
+var step=0,uA,dV,o=0,imgs=new Array,cbm=new Array,bmps=new Object,tito,ct;
+
+function readC(){return String.fromCodePoint(uA[o++]);}
+
+function read(l){switch(l){
+case 2:return dV.getUint16((o+=2)-2);
+case 3:return uA[o++]*65536+uA[o++]*256+uA[o++];}}
+
+function readColor(){
+let a=uA[o++]==255?'':uA[o-1].toString(16).padStart(2,'0');
+return '#'.concat(uA[o++].toString(16).padStart(2,'0'),uA[o++].toString(16).padStart(2,'0'),uA[o++].toString(16).padStart(2,'0'),a).toUpperCase();}
+
+function jump(b,c=1){for(let i=0;i<c;i++)o=read(b)+o;}
+
+input.onchange=function(){if(this.files.length)reader.readAsArrayBuffer(this.files[0]);}
+
+reader.onload=function(){
+let iX,iY,iW,iH,iBc,iZ,iO;
+switch(step++%2){case 0:
+uA=new Uint8Array(this.result);
+dV=new DataView(this.result);
+
+o=4;
+cv.width=read(2);
+cv.height=read(3);
+o+=5;
+tito=[o+2,o=read(2)+o];
+jump(2,3); o++;
+ct=cv.getContext('2d');
+
+let 繼續=true;
+while(o<input.files[0].size&&繼續)switch(readC()){
+ case 'M': o++; jump(3);
+ break;case 'S': jump(3);
+ break;case 'B': o+=14;
+ break;case 'F': o+=16; jump(2,2); o+=3;
+ break;case 'I':
+  imgs.push([read(2),read(3),read(2),read(3),readColor(),read(3),iO=read(3)]);
+  if(!(iO in bmps))bmps[iO]=createImageBitmap(input.files[0].slice(iO+5,iO+5+dV.getUint16(iO+3)));
+ break;case 'L': o+=9;
+ break;case 'T': o+=15; jump(2);
+ break;case 'o': jump(2);
+ break;case 'z': o+=6;
+ break;default:console.log(--o,readC(),'未知資料');繼續=false;}
+
+for(let i in bmps)cbm.push(i,bmps[i]);
+Promise.all(cbm).then(function(){
+ for(let i=0;i<arguments[0].length;i+=2)bmps[arguments[0][i]]=arguments[0][i+1];
+ for([iX,iY,iW,iH,iBc,iZ,iO] of imgs)ct.drawImage(bmps[iO],iX,iY,iW,iH);});
+
+reader.readAsText(input.files[0].slice(tito[0],tito[1]));
+
+break;case 1:
+document.title=this.result;
+}}
+</script></body></html>

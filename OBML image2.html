@@ -1,0 +1,74 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML image 2</title>
+<style>
+body{
+ background-color: black; color: white;
+ text-align: center;}
+canvas{
+ max-width: -webkit-fill-available;}
+</style></head><body><input type="file" accept=".obml" multiple><br><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8')),JPEG={type:'image/jpeg'};
+var fileI=0,uA,dV,o=0,imgs=new Array,bmps=new Object,fileName;
+
+function read(l){switch(l){
+ case 2:return dV.getUint16((o+=2)-2);
+ case 3:return uA[o++]*65536+uA[o++]*256+uA[o++];}}
+
+function jump(b,c=1){for(let i=0;i<c;i++)o=read(b)+o;}
+
+input.onchange=function(){ fileI=0; if(this.files.length)reader.readAsArrayBuffer(this.files[0]);}
+
+reader.onload=function(){
+ let iX,iY,iW,iH,iO,lX,lY,lW,lH,fX,fW;
+ uA=new Uint8Array(this.result);
+ dV=new DataView(this.result);
+ o=14;
+ let tito=decodeUTF8(uA.slice(16,o=read(2)+o));
+ if(input.files.length==1)document.title=tito;
+ fileName=tito.match(/([^\/]+)\.(\w+)/);
+ jump(2,3); o++;
+
+ while(o<input.files[fileI].size)switch(uA[o++]){
+  case 77: o++; jump(3);
+  break;case 83: jump(3);
+  break;case 66: o+=14;
+  break;case 70: o+=16; jump(2,2); o+=3;
+  break;case 73:
+   [iX,iY,iW,iH]=[read(2),read(3),read(2),read(3)];
+   o+=7; iO=read(3);
+   if(!imgs.length){
+    imgs.push([iO]);
+    fX=lX=iX,lY=iY,fW=lW=iW,lH=iH;}
+   else if(lY==iY&&lX+lW==iX&&lH==iH){
+    imgs[imgs.length-1].push([iO]);
+    lX=iX,lW=iW;}
+   else if(fX==iX&&lY+lH==iY&&fW==iW){
+    imgs.push([iO]);
+    lX=iX,lY=iY,lW=iW,lH=iH;}
+   else{ o=input.files[fileI].size; break;}
+   if(!(iO in bmps))bmps[iO]=createImageBitmap(input.files[fileI].slice(iO+5,iO+5+dV.getUint16(iO+3)));
+  break;case  76: o+=9;
+  break;case  84: o+=15; jump(2);
+  break;case 111: jump(2);
+  break;case 122: o+=6;
+  break;default:console.log(--o,String.fromCodePoint(uA[o]),'未知資料');o=input.files[fileI].size;}
+ if(imgs.length){
+  const cbm=new Array;
+  for(let i in bmps)cbm.push(i,bmps[i]);
+  Promise.all(cbm).then(function(){
+   for(let i=0;i<arguments[0].length;i+=2)bmps[arguments[0][i]]=arguments[0][i+1];
+   const cv=new 
+OffscreenCanvas(imgs[0].reduce((ac,v)=>ac+bmps[v].width,0),imgs.reduce((ac,v)=>ac+bmps[v[0]].height,0)),ct=cv.getContext('2d');
+   for(let r=0,y=0;r<imgs.length;r++){
+    for(let c=0,x=0;c<imgs[r].length;c++){
+     ct.drawImage(bmps[imgs[r][c]],x,y);
+     x+=bmps[imgs[r][c]].width;}
+    y+=bmps[imgs[r][0]].height;}
+   (/jpe?g/i.test(fileName[2])?cv.convertToBlob(JPEG):cv.convertToBlob()).then(function(){
+    const a=document.body.appendChild(document.createElement('a'));
+    a.href=a.appendChild(new Image).src=URL.createObjectURL(arguments[0]);
+    a.download=fileName[0];
+    if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI]);});
+   imgs.splice(0);
+   for(let i in bmps){bmps[i].close();delete bmps[i];}});}}
+</script></body></html>

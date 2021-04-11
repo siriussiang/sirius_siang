@@ -1,0 +1,115 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML SVG 2倍</title>
+<style>
+body{
+ background-color: black; color: white;
+ font-family: sans-serif;
+ text-align: center;}
+svg{
+ background-color: white;
+ /*max-width: -webkit-fill-available;*/}
+</style></head><body><input type="file" accept=".obml"><label><input type="checkbox">invert color</label><br><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>
+text{ dominant-baseline: text-before-edge; font-size: 46px;/*22~23*/}
+.bold{ font-weight: bold;}
+</style></svg><script>"use strict";
+const NS='http://www.w3.org/2000/svg',input=document.getElementsByTagName('input').item(0),ivCheck=document.getElementsByTagName('input').item(1),reader=new FileReader,decoder=new TextDecoder('UTF-8');
+var svg=document.getElementsByTagNameNS(NS,'svg').item(0),iA,dV,o=0,imgURL=new Object,lineHeight=50,baseCC=svg.childNodes.length,invert;
+
+function read(l){if(l==2)return dV.getUint16((o+=2)-2,false);
+ return parseInt(Array.from(iA.slice(o,o+=l)).map(byte=>byte.toString(16).padStart(2,'0')).join(''),16);}
+
+function readColor(){
+ let [紅,綠,藍]=[iA[o++],iA[o++],iA[o++]];
+
+ if(!invert)return '#'.concat(紅.toString(16).padStart(2,'0'),綠.toString(16).padStart(2,'0'),藍.toString(16).padStart(2,'0')).toUpperCase();
+
+ if(Math.max(紅,綠,藍)==Math.min(紅,綠,藍))return '#'.concat((255-紅).toString(16).padStart(2,'0').repeat(3)).toUpperCase();
+
+ [紅,綠,藍]=[紅/255,綠/255,藍/255];
+ let 大=Math.max(紅,綠,藍),小=Math.min(紅,綠,藍),和=大+小,差=大-小;
+ let 紅Δ=紅/6/差,綠Δ=綠/6/差,藍Δ=藍/6/差,H,L=和/2,S=L<=1/2?差/和:差/(2-和);
+ switch(大){case 紅:H=綠Δ-藍Δ;
+  break;case 綠:H=1/3+藍Δ-紅Δ;
+  break;case 藍:H=2/3+紅Δ-綠Δ;}
+ if(H<0)H++;
+ return 'hsl('+Math.floor(360*H%360)+','+Math.round(S*100)+'%,'+Math.round((1-L)*100)+'%)';}
+
+function readText(){return decoder.decode(iA.slice(o+2,o=read(2)+o))}
+
+function jump(b,c=1){for(let i=0;i<c;i++)o=read(b)+o;}
+
+input.onchange=function(){if(this.files.length){
+let gc=svg.childElementCount/2;
+invert=ivCheck.checked;
+for(let i in imgURL){URL.revokeObjectURL(imgURL[i]);delete imgURL[i];}
+reader.readAsArrayBuffer(this.files[0]);
+for(let i=baseCC;i<gc;i++)svg.removeChild(svg.childNodes[baseCC]);
+}}
+
+reader.onload=function(){
+iA=new Uint8Array(this.result);
+dV=new DataView(this.result);
+o=4;
+let w=read(2)*2,h=read(3)*2;
+svg.setAttribute('width',w);
+svg.setAttribute('height',h);
+svg.setAttribute('viewBox',[0,0,w,h].join(' '));
+svg.setAttribute('preserveAspectRatio','xMidYMin');
+o+=5;
+document.title='OSVG'+readText();
+jump(2,3); o++;
+
+let img,rect,text,iX,iY,iW,iH,iBCiZ,iO,content,tspan,tX;
+while(o<input.files[0].size)switch(iA[o++]){
+case 77: o++; jump(3);
+break;case 83: jump(3);
+break;case 66:
+
+ rect=document.createElementNS(NS,'rect');
+ rect.setAttribute('x',read(2)*2);     rect.setAttribute('y',read(3)*2);
+ rect.setAttribute('width',read(2)*2); rect.setAttribute('height',read(3)*2);
+ if(iA[o++]<255)rect.setAttribute('fill-opacity',Math.round(iA[o-1]/0.000255)/1000000);
+ rect.setAttribute('fill',readColor());
+ svg.appendChild(rect);
+
+break;case 70: o+=16; jump(2,2); o+=3;
+break;case 73:
+
+ [iX,iY,iW,iH,iBCiZ,iO]=[read(2)*2,read(3)*2,read(2)*2,read(3)*2,o+=7,read(3)];
+ if(!(iO in imgURL))imgURL[iO]=URL.createObjectURL(input.files[0].slice(iO+5,iO+5+dV.getUint16(iO+3)));
+ img=document.createElementNS(NS,'image');
+ img.setAttribute('x',iX);     img.setAttribute('y',iY);
+ img.setAttribute('width',iW); img.setAttribute('height',iH);
+ img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',imgURL[iO]);
+ img.setAttribute('preserveAspectRatio','none');
+ svg.appendChild(img);
+
+break;case 76: o+=9;
+break;case 84:
+
+ text=document.createElementNS(NS,'text');
+ tX=read(2)*2;
+ text.setAttribute('x',tX); text.setAttribute('y',read(3)*2);
+ o+=5;
+ if(iA[o++]<255)text.setAttribute('fill-opacity',Math.round(iA[o-1]/0.000255)/1000000);
+ text.setAttribute('fill',readColor());
+ if(iA[o++]%2)text.classList.add('bold');
+ content=readText().split('\n');
+ text.appendChild(document.createTextNode(content[0]));
+ for(let i=1;i<content.length;i++){
+  tspan=document.createElementNS(NS,'tspan');
+  tspan.setAttribute('x',tX);
+  tspan.setAttribute('dy',lineHeight);/*25*/
+  tspan.appendChild(document.createTextNode(content[i]));
+  text.appendChild(tspan);}
+ svg.appendChild(text);
+
+break;case 111: jump(2);
+break;case 122: o+=6;
+break;default:console.log(o-1,String.fromCodePoint(iA[o-1]),'未知資料');o=input.files[0].size;}
+}
+
+ivCheck.onchange=function(){ document.styleSheets[0].rules[1].style.backgroundColor=this.checked?'black':'white';}
+
+if(input.files.length){input.onchange();ivCheck.onchange();}
+</script></body></html>

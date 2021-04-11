@@ -1,0 +1,155 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>OBML 除錯2</title>
+<style>
+body{
+ background: black; color: white;
+ font-family: monospace;
+ text-align: justify;}
+td:nth-of-type(2){
+ white-space: nowrap;
+ word-break: keep-all;}
+td:nth-of-type(3){
+ white-space: pre-wrap;
+ word-break: break-all;}
+</style>
+</head><body><input type="file" accept=".obml,.obml16"><table border="1"><thead><tr><th>位置</th></tr></thead><tbody></tbody></table><script>"use strict";
+
+const input=document.getElementsByTagName('input').item(0),table=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var uA,dV,o=0,version=0;
+
+function read(l){
+ if(l==2)return dV.getUint16((o+=2)-2);
+ if(l==3)return uA[o++]<<16|dV.getUint16((o+=2)-2);
+ return parseInt(Array.from(uA.subarray(o,o+=l)).map(byte=>byte.toString(16).padStart(2,'0')).join(''),16);}
+
+function readC(){
+ let a=uA[o++]==255?'':uA[o-1].toString(16).padStart(2,'0');
+ return '#'.concat(uA[o++].toString(16).padStart(2,'0'),uA[o++].toString(16).padStart(2,'0'),uA[o++].toString(16).padStart(2,'0'),a).toUpperCase();}
+
+function readHex(l){return Array.from(uA.subarray(o,o+=l)).map(b=>b.toString(16).padStart(2,'0')).join(' ')}
+
+function readText(){
+ let tl=read(2);
+ return tl?decodeUTF8(uA.subarray(o,o+=tl)).replace(/[\x00-\x09\x0B-\x1F\x7F]/g,c=>c=='\x7F'?'␡':String.fromCodePoint(c.codePointAt(0)+9216)):'';}
+
+function jump(b){let l=read(b);o+=l;return l}
+
+function log(...cells){
+ let row=table.insertRow(-1);
+ for(let i of cells){
+  if(i===null||i==='')row.insertCell(-1);
+  else row.insertCell(-1).appendChild(document.createTextNode(i));}}
+
+function s1Link(sEnd){
+ let l,t,ts,te,row,ca;
+ while(o<sEnd){
+  row=table.insertRow(-1);
+  row.insertCell(0).appendChild(document.createTextNode(o));
+  t=uA[o++];
+  if(t==0){
+   l=read(2);
+   row.insertCell(1).appendChild(document.createTextNode('\u2400'));
+   ts=readText()+'. '+readText();
+   for(let i=1;i<l;i++)ts+='\n'+readText()+'. '+readText();
+   row.insertCell(2).appendChild(document.createTextNode(ts));}
+  else if(t==111){
+   row.insertCell(1).appendChild(document.createTextNode('o'));
+   row.insertCell(2).appendChild(document.createTextNode(readText()));}
+  else if(t==116){/*與上相同*/
+   row.insertCell(1).appendChild(document.createTextNode('t'));
+   row.insertCell(2).appendChild(document.createTextNode(readText()));}
+  else{
+   row.insertCell(1).appendChild(document.createTextNode(String.fromCodePoint(t)));
+   l=uA[o++];
+   ts='['+read(2)+','+read(3)+','+read(2)+','+read(3)+']';
+   for(let i=1;i<l;i++)ts+=',['+read(2)+','+read(3)+','+read(2)+','+read(3)+']';
+   if(t==67){
+    ca=new Array;
+    if(version==6&&(te=readText()))ts+='\n'+te;
+    l=read(2);
+    for(let i=0;i<l;i+=3)ca.push([uA[o++],read(2)]);
+    ts+='\n'+Boolean(ca[0][0])+'：'+ca.filter((v)=>v[0]==ca[0][0]).reduce((acc,v)=>acc+','+v[1]);
+    ts+='\n'+(!ca[0][0])+'：'+ca.filter((v)=>v[0]!=ca[0][0]).reduce((acc,v)=>acc+','+v[1]);
+    if(version>=13){
+     ts+='\n'+readHex(2);
+     if(te=readText())ts+='\n'+te}}
+   else if(t==78&&version>=13){ 
+    o+=2;
+    ts+='\n['+read(2)+','+read(3)+'] '+readText();
+    /*if(version>=13)*/ts+='\n'+readHex(2);
+    if(te=readText())ts+='\n'+te}
+   else{
+    if(te=readText())ts+='\n'+te;
+    if(version>=13)ts+='\n'+readHex(2);
+    if(te=readText())ts+='\n'+te};
+   row.insertCell(2).appendChild(document.createTextNode(ts));}}}
+
+function createImage(){
+let is=read(2),blob; if(is){
+let img=document.body.appendChild(document.createElement('img'));
+img.dataset.offset=o-2;
+ if(uA[o]==255&&uA[o+1]==216)blob=input.files[0].slice(o,o+=is,'image/jpeg');
+ else if(uA[o+1]==80&&uA[o+2]==78&&uA[o+3]==71)blob=input.files[0].slice(o,o+=is,'image/png');
+ else blob=input.files[0].slice(o,o+=is);
+img.src=URL.createObjectURL(blob);
+img.dataset.size=is;}}
+
+input.onchange=function(){if(this.files.length){
+ let tgc=table.rows.length,igc=document.images.length;
+ reader.readAsArrayBuffer(this.files[0]);
+ for(let i=0;i<tgc;i++)table.deleteRow(0);
+ for(let i=0;i<igc;i++)URL.revokeObjectURL(document.body.removeChild(document.images[0]).src);}}
+
+reader.onload=function(){
+let s=0,sis,sEnd;
+uA=new Uint8Array(this.result);
+dV=new DataView(this.result);
+o=0;
+if(dV.getUint32(0)==0x2D35510)log(0,null,readHex(4));
+let size=read(3)+o;
+log(o,'檔案大小（接著的byte數）',size);
+log(o,'版本（檔案由此開始）',version=uA[o++]);
+log(o,'Width',read(2));
+log(o,'Height',read(3));
+log(o,null,readHex(version<14?5:2));
+log(o,'標題',readText());
+log(o,'圖示',jump(2)+' bytes');
+log(o,'網址base',readText());
+log(o,'網址',readText());
+log(o,'頁面類型',uA[o++]);
+if(version>=13){
+ if(version==13)log(o,null,readHex(1));
+ if(version>=15)log(o,null,readHex(2));
+ log(o,'S2(Images) 位置',read(3))};
+
+while(o<size)switch(uA[o++]){
+case  77://M
+ if(uA[o]==83){/*S*/
+  o+=4; jump(2);
+  log(o,'憑證持有人',readText()); log(o,'憑證發行人',readText());
+  log(o,'過期日',readText()); log(o,'資訊',readText());
+  log(o,'憑證類型',readText()); log(o,'網域',readText());}
+ else log(o-1,'M'+String.fromCodePoint(uA[o++]),'未知，大小：'+jump(3));
+
+break;case  83://S
+ sis=read(3);
+ if(s==0){
+  log(o-4,'S1 Links','大小：'+sis);
+  if(sis)s1Link(o+sis);
+  s=1;}
+ else{
+  sEnd=o+sis;
+  log(o-4,'S2 Images','大小：'+sis);
+  while(o<sEnd)createImage();}
+
+break;case  66: log(o-1,'B','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC());
+break;case  70: log(o-1,'Form','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC()+' '+String.fromCodePoint(uA[o++])+uA[o++]+'\n'+readText()+'\n'+readText()+'\n'+readHex(3));
+break;case  73: log(o-1,'Image','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC()+' '+read(3)+','+read(3));
+ /*if(version==16)[2,3,2,3],4Color,3Unknow,[2,3]ImageWH?,3ImageOffset?*/
+break;case  76: let hex=readHex(9); o-=9; log(o-1,'L','未知，'+hex+'（'+read(3)+'、'+read(3)+'、'+read(3)+'）');
+break;case  84: log(o-1,'Text','['+read(2)+','+read(3)+','+read(2)+','+read(3)+'] '+readC()+' '+uA[o++]+'\n'+readText());
+/*break;case 111: log(o-1,'o','未知，大小：'+jump(2));*/
+break;case 122: log(o-1,'z','未知，'+readHex(6));
+break; default: log(o-1,String.fromCodePoint(uA[o-1]).replace(/\x00/g,'\u2400'),'未知資料');o=size;}
+}
+</script></body></html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link rel="icon" href="../Apk/com.fundoshiparade.bokukoro3jp/assets/igaworks/pluslock/res/icon_appicon_download.png">
+<title>OBML Invert</title>
+<style>
+body{
+ background-color: black; color: white;
+ font-family: sans-serif;
+ text-align: justify;}
+div{ text-align: center;}
+li{
+ background-image:url(../Apk/com.edzondm.revolutionwalls/res/drawable-xxxhdpi-v4/ic_action_download.png);
+ background-size: contain;
+ background-position-x: right;
+ background-repeat: no-repeat;
+ padding-inline-end: 40px;}
+li.end{
+ background-image:url(../Apk/Google%20Chrome%20Fast%20Secure_v65/res/drawable-xxhdpi-v4/infobar_downloading.png);}
+.mult{
+ background-color: transparent;
+ background-image:url(../Apk/com.fundoshiparade.bokukoro3jp/assets/igaworks/pluslock/res/ic_down_l_default.png);
+ background-size:contain;
+ background-repeat: no-repeat;
+ width: 64px;
+ height: 64px;
+ border-color: transparent;}
+.mult:hover{
+ background-image:url(../Apk/com.fundoshiparade.bokukoro3jp/assets/igaworks/pluslock/res/ic_down_l_ani_02.png);}
+.mult:active{
+ background-image:url(../Apk/com.fundoshiparade.bokukoro3jp/assets/igaworks/pluslock/res/ic_down_l_default.png);}
+.mult.end{
+ background-image:url(../Apk/Google%20Chrome%20Fast%20Secure_v65/res/drawable-xxhdpi-v4/infobar_multiple_downloads.png);}
+</style></head><body><div><input type="file" multiple accept=".obml"><label><input type="checkbox" checked>以標題作為檔案名稱</label><button class="mult"></button></div><ol></ol><script>"use strict";
+const [input,cb]=document.getElementsByTagName('input'),ol=document.getElementsByTagName('ol').item(0),button=document.getElementsByTagName('button').item(0),reader=new FileReader,decoder=new TextDecoder('UTF-8');
+var fileI=new Number,uA,dV,o=0;
+
+/*待新增：Use title for new fileName 以標題作為檔案名稱 */
+
+function readC(){return String.fromCodePoint(uA[o++]);}
+
+function read(l){switch(l){
+case 2:return dV.getUint16((o+=2)-2,false);
+case 3:return uA[o++]*65536+uA[o++]*256+uA[o++];}}
+
+function invert(){
+let [紅,綠,藍]=[uA[o]/255,uA[o+1]/255,uA[o+2]/255];
+let 大=Math.max(紅,綠,藍),小=Math.min(紅,綠,藍);
+if(大==小)紅=綠=藍=1-小;
+else{
+let 和=大+小,差=大-小,紅Δ=紅/6/差,綠Δ=綠/6/差,藍Δ=藍/6/差;
+let H,L=1-和/2,Q=L<1/2?L*(1+差/(2-和)):L+差/和-L*差/和,P=2*L-Q;
+switch(大){case 紅:H=綠Δ-藍Δ;
+break;case 綠:H=1/3+藍Δ-紅Δ;
+break;case 藍:H=2/3+紅Δ-綠Δ;}
+if(H<0)H++;if(H>1)H--;
+function hue(t){
+if(t<1/6)return P+(Q-P)*6*t;
+if(t<1/2)return Q;
+if(t<2/3)return P+(Q-P)*6*(2/3-t);
+return P;}
+紅=hue(H+1/3>1?H-2/3:H+1/3);
+綠=hue(H);
+藍=hue(H-1/3<0?H+2/3:H-1/3);
+}
+uA.set([Math.round(紅*255),Math.round(綠*255),Math.round(藍*255)],o);
+o+=3;}
+
+function jump(b,c=1){for(let i=0;i<c;i++)o=read(b)+o;}
+
+input.onchange=function(){fileI=0;if(this.files.length)reader.readAsArrayBuffer(this.files[0]);}
+
+reader.onload=function(){
+uA=new Uint8Array(this.result);
+dV=new DataView(this.result);
+o=14;
+let titolo=decoder.decode(uA.subarray(16,o=read(2)+o));
+jump(2,3); o++;
+
+while(o<input.files[fileI].size)switch(readC()){
+case 'M': o++; jump(3);
+break;case 'S': jump(3);
+break;case 'B': o+=11; invert();
+break;case 'F': o+=16; jump(2,2); o+=3;
+break;case 'I': o+=20;
+break;case 'L': o+=9;
+break;case 'T': o+=11; invert(); o++; jump(2);
+break;case 'o': jump(2);
+break;case 'z': o+=6;
+break;default:console.log(--o,readC(),'未知資料');o=input.files[fileI].size;}
+
+titolo=cb.checked&&/[^\x00-\x1F"\*\.\/\:<>\?\\\|]/.test(titolo)?titolo.replace(/[\x00-\x1F"\*\.\/\:<>\?\\\|]+/g,'').replace(/\s+/g,' ')+'.obml':input.files[fileI].name;
+ol.insertAdjacentHTML('beforeend','<li><a href="'+URL.createObjectURL(new Blob([this.result]))+'" download="'+titolo+'" style="color:hsl('+Math.floor(Math.random()*360)+',100%,75%);">'+titolo+'</a></li>');
+if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI]);
+}
+
+button.onclick=function(){
+for(let i of document.links)i.click();}
+</script></body></html>
