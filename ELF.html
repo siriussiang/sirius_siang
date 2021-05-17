@@ -1,0 +1,134 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>␡ELF</title>
+<style>
+body{
+ background: black; color: white;
+ font-family: monospace;
+ text-align: justify;}
+table{
+ margin-inline: auto;}
+td:nth-of-type(2){
+ white-space: nowrap;
+ word-break: keep-all;}
+td:nth-of-type(3){
+ white-space: pre-wrap;
+ word-break: break-all;}
+</style>
+</head><body><input type="file" data-accept=".so"><table border="1"><tbody></tbody></table><script>"use strict";
+
+const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var uA,dV,p=0,so=new Object,cp=p,liEn=false,sp=new Proxy(so,{set:function(obj,prop,value){
+ obj[prop]=value;
+ log(prop.slice(1),value);
+ return true}}),row=null;
+
+function log(...cells){
+ row=tBody.insertRow(-1);
+ row.insertCell(-1).appendChild(document.createTextNode(cp));
+ for(let i of cells){
+  if(i===null||i==='')row.insertCell(-1);
+  else row.insertCell(-1).appendChild(document.createTextNode(i));}}
+
+function uInt(b){
+ cp=p;
+ p+=b;
+ switch(b){
+  case 1:return uA[cp];
+  case 2:return dV.getUint16(cp,liEn);
+  case 4:return dV.getUint32(cp,liEn);
+  case 8:return dV.getBigUint64(cp,liEn)}}
+
+input.onchange=function(){if(this.files.length){
+ let tgc=tBody.rows.length;
+ reader.readAsArrayBuffer(this.files[0]);
+ for(let i=0;i<tgc;i++)tBody.deleteRow(0);}}
+
+
+reader.onload=function(){
+ uA=new Uint8Array(this.result);
+ dV=new DataView(this.result);
+ p=0;
+ liEn=false;
+
+
+ if(uInt(4)==0x7F454C46)log('Magic Number','␡ELF');
+ else throw new TypeError('Magic Number');
+ let bClass=uInt(1),bb=[4,4,8][bClass];
+ log('Class',[null,32,64][bClass]);
+
+ liEn=Boolean(uInt(1)&1);
+ log('Endian',liEn?'little':'big');
+ log('Version',uInt(1));
+
+ p=0x10;
+
+
+ log('Type',uInt(2));
+ log('Machine',uInt(2));
+ log('Version',uInt(4));
+ log('Entry',uInt(bb));
+ so.ePhoff=uInt(bb);
+ log('Program Header Offset',so.ePhoff);
+ so.eShoff=uInt(bb);
+ log('Section Header Offset',so.eShoff);
+ log('Flags',uInt(4));
+ log('Ehsize',uInt(2));
+ log('Phentsize',uInt(2));
+ sp.ePhnum=uInt(2);
+ sp.eShentsize=uInt(2);
+ sp.eShnum=uInt(2);
+ sp.eShstrndx=uInt(2);
+ 
+ p=so.ePhoff;
+ for(let i=0;i<so.ePhnum;i++){
+  log('Program header '+i,'p_type',uInt(4));
+  tBody.rows.item(tBody.rows.length-1).cells.item(1).rowSpan=8;
+  log('p_offset',uInt(bb));
+  log('p_vaddr',uInt(bb));
+  log('p_paddr',uInt(bb));
+  log('p_filesz',uInt(4));
+  log('p_memsz',uInt(4));
+  log('p_flags',uInt(4));
+  log('p_align',uInt(4));}
+
+ p=so.eShoff;
+ let shstr=[];
+ so.shdr=[];
+ for(let i=0;i<so.eShnum;i++){
+  so.shdr[i]={};
+  log('Section header '+i,'sh_name',so.shdr[i].name=uInt(4));
+  row.cells.item(1).rowSpan=10;
+  shstr.push(row.cells.item(1));
+  log('sh_type',so.shdr[i].type=uInt(4));
+  log('sh_flags',uInt(4));
+  log('sh_addr',uInt(bb));
+  log('sh_offset',so.shdr[i].offset=uInt(bb));
+  log('sh_size',so.shdr[i].size=uInt(4));
+  log('sh_link',uInt(4));
+  log('sh_info',uInt(4));
+  log('sh_addralign',uInt(4));
+  log('sh_entsize',uInt(4));}
+
+ for(let i=0;i<so.eShnum;i++){
+  let csh=so.shdr[i],shstroff=so.shdr[so.eShstrndx].offset+csh.name,part=null;
+  shstr[i].appendChild(document.createElement('br'));
+  shstr[i].appendChild(document.createTextNode(decodeUTF8(uA.subarray(shstroff,uA.indexOf(0,shstroff)))));
+
+  if((csh.type==3||((part=uA.subarray(csh.offset,csh.offset+csh.size)).every(b=>b==0||(b>31&&b!=0x7F))&&part.some(b=>b!=0)))&&i!=so.eShstrndx){
+   let hue=Math.floor(Math.random()*360);
+   document.body.appendChild(document.createElement('hr'));
+   decodeUTF8(part?part:uA.subarray(csh.offset,csh.offset+csh.size)).split('\x00').forEach((s,i1,a)=>{
+    if(s.length){
+	 if(document.body.lastChild.nodeName=='SPAN')document.body.appendChild(document.createTextNode('、'));
+     let span=document.body.appendChild(document.createElement('span'));
+     span.appendChild(document.createTextNode(s));
+     span.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,93.75%)'}})}}
+
+ /*log('',uInt());
+  log('',uInt());
+  log('',uInt());
+  log('',uInt());*/
+
+
+ }
+</script></body></html>

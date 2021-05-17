@@ -1,0 +1,82 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Lua</title>
+<style>
+body{
+ background: black; color: white;
+ font-family: monospace;
+ text-align: justify;}
+table{
+ margin-inline: auto;}
+td:nth-of-type(2){
+ white-space: nowrap;
+ word-break: keep-all;}
+td:nth-of-type(3){
+ white-space: pre-wrap;
+ word-break: break-all;}
+</style>
+</head><body><input type="file" data-accept=".lu,.lua"><table border="1"><tbody></tbody></table><script>"use strict";
+
+const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var dV,p=0,lua=new Object,cp=p,liEn=false,lup=new Proxy(lua,{set:function(obj,prop,value){
+ obj[prop]=value;
+ log(prop,value);
+ return true}});
+
+function log(...cells){
+ let row=tBody.insertRow(-1);
+ row.insertCell(-1).appendChild(document.createTextNode(cp));
+ for(let i of cells){
+  if(i===null||i==='')row.insertCell(-1);
+  else row.insertCell(-1).appendChild(document.createTextNode(i));}}
+
+function uInt(b){
+ cp=p;
+ p+=b;
+ switch(b){
+  case 1:return dV.getUint8(cp);
+  case 2:return dV.getUint16(cp,liEn);
+  case 4:return dV.getUint32(cp,liEn);
+  case 8:return dV.getBigUint64(cp,liEn)}}
+
+input.onchange=function(){if(this.files.length){
+ let tgc=tBody.rows.length;
+ reader.readAsArrayBuffer(this.files[0]);
+ for(let i=0;i<tgc;i++)tBody.deleteRow(0);}}
+
+
+reader.onload=function(){
+ dV=new DataView(this.result);
+ p=0;
+ liEn=false;
+
+
+ if(uInt(4)==0x1B4C7561)log('Magic Number','␛Lua');
+ else throw new TypeError('Magic Number');
+ lua.version=uInt(1);
+ log('Version',(lua.version>>4)+'.'+(lua.version&0xF));
+ log('Official',uInt(1)?'no':'yes');
+ liEn=Boolean(uInt(1)&1);
+ log('Endian',liEn?'little':'big');
+ p=10;
+ lup.nbl=uInt(1);/*number byte length*/
+ p=28;
+ lup.instructions=uInt(4);
+ p=32+lua.instructions*4;
+ lup.constants=uInt(4);
+
+ if(lua.constants)document.body.appendChild(document.createElement('hr'));
+ let hue=Math.floor(Math.random()*360);
+ for(let i=0;i<lua.constants;i++){
+  let type=uInt(1);
+  if(type==4){
+   if(document.body.lastChild.nodeName=='SPAN')document.body.appendChild(document.createTextNode('、'));
+   let sbl=uInt(4),span=document.body.appendChild(document.createElement('span'));
+   span.appendChild(document.createTextNode(decodeUTF8(new Uint8Array(this.result,p,sbl)).replace(/[\x00-\x09\x0B-\x1F\x7F]/g,c=>c=='\x7F'?'␡':String.fromCodePoint(c.codePointAt(0)+9216))));
+   p+=sbl;
+   span.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,93.75%)'}
+  else if(type==1)++p;
+  else if(type==3)p+=lua.nbl;
+  else if(type!=0){
+   console.log(type);
+   break}}}
+</script></body></html>

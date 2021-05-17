@@ -1,0 +1,180 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Ren Python Archive</title>
+<style>
+body{
+ background-color: black;
+ color: white;
+ font-family: sans-serif;
+ text-align: center;}
+thead{
+ text-align: center;}
+a{
+ color:lightgreen;}
+
+table{
+ border-collapse: collapse;
+ margin-inline: auto;}
+tbody{
+ text-align: start;}
+th{
+ cursor: pointer;}
+td.detailsColumn{
+ -webkit-padding-start: 2em;
+ text-align: end;
+ white-space: nowrap;}
+a.icon{
+ -webkit-padding-start: 1.5em;
+ text-decoration: none;}
+a.icon:hover{
+ text-decoration: underline;}
+html[dir=rtl] a{
+ background-position-x: right;}
+#parentDir{
+ font-size: 24px;
+ border-bottom: 1px solid #c0c0c0;
+ margin-bottom: 10px;
+ padding-bottom: 10px;
+ white-space: nowrap;}
+a.file{
+ background : url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAABnRSTlMAAAAAAABupgeRAAABHUlEQVR42o2RMW7DIBiF3498iHRJD5JKHurL+CRVBp+i2T16tTynF2gO0KSb5ZrBBl4HHDBuK/WXACH4eO9/CAAAbdvijzLGNE1TVZXfZuHg6XCAQESAZXbOKaXO57eiKG6ft9PrKQIkCQqFoIiQFBGlFIB5nvM8t9aOX2Nd18oDzjnPgCDpn/BH4zh2XZdlWVmWiUK4IgCBoFMUz9eP6zRN75cLgEQhcmTQIbl72O0f9865qLAAsURAAgKBJKEtgLXWvyjLuFsThCSstb8rBCaAQhDYWgIZ7myM+TUBjDHrHlZcbMYYk34cN0YSLcgS+wL0fe9TXDMbY33fR2AYBvyQ8L0Gk8MwREBrTfKe4TpTzwhArXWi8HI84h/1DfwI5mhxJamFAAAAAElFTkSuQmCC ") left top no-repeat;}
+a.dir{
+ background : url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAd5JREFUeNqMU79rFUEQ/vbuodFEEkzAImBpkUabFP4ldpaJhZXYm/RiZWsv/hkWFglBUyTIgyAIIfgIRjHv3r39MePM7N3LcbxAFvZ2b2bn22/mm3XMjF+HL3YW7q28YSIw8mBKoBihhhgCsoORot9d3/ywg3YowMXwNde/PzGnk2vn6PitrT+/PGeNaecg4+qNY3D43vy16A5wDDd4Aqg/ngmrjl/GoN0U5V1QquHQG3q+TPDVhVwyBffcmQGJmSVfyZk7R3SngI4JKfwDJ2+05zIg8gbiereTZRHhJ5KCMOwDFLjhoBTn2g0ghagfKeIYJDPFyibJVBtTREwq60SpYvh5++PpwatHsxSm9QRLSQpEVSd7/TYJUb49TX7gztpjjEffnoVw66+Ytovs14Yp7HaKmUXeX9rKUoMoLNW3srqI5fWn8JejrVkK0QcrkFLOgS39yoKUQe292WJ1guUHG8K2o8K00oO1BTvXoW4yasclUTgZYJY9aFNfAThX5CZRmczAV52oAPoupHhWRIUUAOoyUIlYVaAa/VbLbyiZUiyFbjQFNwiZQSGl4IDy9sO5Wrty0QLKhdZPxmgGcDo8ejn+c/6eiK9poz15Kw7Dr/vN/z6W7q++091/AQYA5mZ8GYJ9K0AAAAAASUVORK5CYII=") left top no-repeat;}
+</style></head><body><input type="file"><div id="parentDir"></div><table><thead><tr class="header" id="theader"><th>名稱</th><th class="detailsColumn">大小</th></tr></thead><tbody></tbody></table><script src="zLib.js"></script><script src="pickle.js"></script><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),box=document.getElementById('parentDir'),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,deUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var arc=new Object,root=new Object,pathN='null';
+
+input.onchange=function(){if(this.files.length){
+ reader.readAsArrayBuffer(this.files[0]);
+ document.title=this.files[0].name;}}
+
+reader.onload=function(){
+ let uA=new Uint8Array(this.result);
+ let l=deUTF8(uA.subarray(0,uA.indexOf(0x0A)));
+ let offset,key,iua,index;
+ offset=parseInt(l.slice(8,24),16);
+ key=parseInt(l.substring(25,33),16);
+ /*console.log(offset,key);*/
+
+ iua=ZLib.inflate(uA.subarray(offset));
+ index=pickle.load(iua.buffer.slice(0,iua.byteLength));
+
+ for(let k in index){
+  index[k][1]=index[k][0][1]^key;
+  index[k][0]=index[k][0][0]^key;
+
+  let pa=k.replace(/\/{2,}/g,'/').replace(/^\//,'').split('/'),p=root;
+  while(pa.length>1){
+   let f=pa.shift();
+   if(!(f in p))p[f]=new Object;
+   p=p[f];}
+  p[pa[0]]=k;}
+
+ Object.assign(arc,index);
+ onhashchange();}
+
+
+var fileExt={
+ 'png':'image/png',/*646*/
+ 'mp3':'audio/mp3',/*128*/
+ 'txt':'text/plain;charset=UTF-8',/*61*/
+ 'rpy':'text/plain;charset=UTF-8',/*44*/
+ /*'rpyc':'application/octet-stream',44*/
+ 'ogg':'audio/ogg',/*12*/
+ 'jpg':'image/jpeg',/*3*/
+ 'wav':'audio/wav',/*2*/
+ 'avi':'video/avi',/*1*/
+ 'webm':'video/webm'}/*1*/
+
+
+function createHref(ev){
+ let n=this.dataset.pn,ex=n.match(/[^\.]+$/)[0].toLowerCase();
+ this.href=URL.createObjectURL(ex in fileExt?input.files[0].slice(arc[n][0],arc[n][0]+arc[n][1],fileExt[ex]):input.files[0].slice(arc[n][0],arc[n][0]+arc[n][1]));
+ delete this.dataset.pn;
+ this.onclick=null;}
+
+
+onhashchange=function(){
+ let pa=unescape(location.hash).replace(/\/{2,}/g,'/').replace(/^#?\/?/,'').split('/'),p=root,newPath='',pda=[input.files[0].name.replace(/\.\w+$/,''),''];
+ while(pa.length){
+  let f=pa.shift();
+  if(f in p&&typeof p[f]=="object"){
+   p=p[f];
+   newPath+=f+'/';
+   pda.push(f,newPath);}}
+
+ if(pathN!=newPath){
+  pathN=newPath;
+  while(box.hasChildNodes())box.removeChild(box.firstChild);
+  while(pda.length>2)addDir(pda.shift(),true,pda.shift());
+  addDir(pda[0],false);
+
+  let fold=[],file=[];
+  while(tBody.rows.length)tBody.deleteRow(0);
+  for(let k in p)if(typeof p[k]=="object")fold.push(k);
+  else file.push(k);
+  fold.forEach(f=>addRow(f,f,true,0));
+  file.forEach(f=>addRow(f,p[f],false,arc[p[f]][1]));}}
+
+
+function addDir(name,link,url){
+ if(link){
+  let link=box.appendChild(document.createElement("a"));
+  link.innerText=name;
+  link.href='#'+url;
+  box.appendChild(document.createTextNode('/'));}
+ else box.appendChild(document.createTextNode(name+'/'));}
+
+
+function addRow(name,url,isdir,size){
+ var row=tBody.insertRow(-1),fileCell=row.insertCell(0),link=fileCell.appendChild(document.createElement("a")),sizeString='';
+ link.className=isdir?"icon dir":"icon file";
+ if(isdir){
+  name=name+"/";
+  link.href='#'+pathN+url+"/";
+  size=0;}
+ else{
+  link.href='about:blank';
+  link.target='_blank';
+  link.dataset.pn=url;
+  link.onclick=createHref;
+  sizeString=size;
+  /*link.draggable="true";
+   link.ondragstart=onDragStart;*/}
+ link.innerText=name;
+ fileCell.dataset.value=name;
+ row.appendChild(fileCell);
+
+ var cell=row.insertCell(1);
+ cell.setAttribute("class", "detailsColumn");
+ cell.dataset.value=size;
+ cell.innerText=sizeString;}
+
+function sortTable(){
+ var column=this.cellIndex,oldOrder=this.dataset.order||'1';
+ oldOrder=parseInt(oldOrder,10);
+ var newOrder=0-oldOrder;
+ this.dataset.order=newOrder;
+
+ var rows=tBody.rows,list=[],i;
+ for(i=0;i<rows.length;i++)list.push(rows[i]);
+
+ list.sort(function(row1,row2){
+  var a=row1.cells[column].dataset.value;
+  var b=row2.cells[column].dataset.value;
+  if(column){
+   a=parseInt(a,10);
+   b=parseInt(b,10);
+   return a>b?newOrder:a<b?oldOrder:0;}
+
+  /*Column 0 is text.*/
+  if(a>b)return newOrder;
+  if(a<b)return oldOrder;
+  return 0;});
+
+ /*Appending an existing child again just moves it.*/
+ for(i=0;i<list.length;i++)tBody.appendChild(list[i]);}
+
+var theads=document.getElementById("theader").cells;
+theads[0].onclick=sortTable;
+theads[1].onclick=sortTable;
+</script></body></html>

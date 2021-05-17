@@ -1,0 +1,130 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>netHexageReaper mf</title>
+<style>
+body{background:black;text-align:center;color:white;font-family:monospace}
+table{width:-webkit-fill-available}
+td:nth-of-type(odd){/*display:none*/}
+</style><!--
+mojo/
+ o p = 產生[?x256]
+ p a = 解密
+ at
+  b = getFileSize?
+  f,g = get16Big
+  h = get32
+ aj d = getAsset
+
+mf
+0 2  magicNumber:"ac dc"
+2 2 filesize
+4 4 核對
+
+function o->p(){
+ v5=0x100;
+ v0=d;
+ if(v0)return v0;
+ v3=Array(v5);
+ v2=0;
+
+ :goto_0
+ if(v2>v5)d=v3;
+ v0=8;
+ v1=v2;
+
+ :goto_1
+ v0--;
+ if(v0<0){
+  v3[v2]=v1;/*v3[0]=0*/
+  v2++;
+  goto :goto_0}
+
+ if(v1&0x1==0/*v1是偶數*/)v1=v1>>>0x1;
+ else v1=(v1>>>0x1)^-0x12477ce0;
+ goto :goto_1
+
+var v1=1;for(let i=0;i<8;i++)v1=v1&0x1==0?v1>>>0x1:(v1>>>0x1)^-0x12477ce0;v1;
+
+ var v3=Array(256);
+ for(let v2=0;v2<256;v2++){
+  let v1=v2;
+  for(let v0=0;v0<8;v0++)v1=(v1&1)==0?v1>>>1:v1>>>1^-0x12477ce0;
+  v3[v2]=v1;}
+ 
+
+function b(){
+ var v6=0xFFFF,v5=8,v0=0,v1='mf';
+
+ v2=file(v1);
+ v1=atb??(v2);
+ if(v1>=8)keepGo;
+
+
+f o b([b],i/*8*/,i/*0xF7C-9*/){
+ v0=-1;
+ v2="o;->p"();
+
+ p2--;
+ if(p2<0)return v0^-1;
+ v1=p1+1;
+ v3=p0[p1];
+ v3^=v0;
+ v3&=0xFF;
+ v3=v2[v3];
+ v0>>>=8;
+ v0^=v3;
+ p1=v1;
+--></head><body><table border="1"><tbody></tbody></table><script>"use strict";
+const request=new XMLHttpRequest,tBody=document.getElementsByTagName('tBody').item(0);
+var uA=null/*,mojoOD=Array(256)*/;
+
+/*for(let v2=0;v2<256;v2++){
+ let v1=v2;
+ for(let v0=0;v0<8;v0++)v1=(v1&1)==0?v1>>>1:v1>>>1^-0x12477CE0;
+ mojoOD[v2]=v1;}*/
+ 
+function readable(code){
+ if(code<32)return code+9216;
+ switch(code){
+  case 32:return 9251;
+  case 127:return 9249};
+ return code};
+
+request.open('GET','file:///D:/Yo/Apk/Apk/net.hexage.reaper/assets/mf');
+request.responseType='arraybuffer';
+
+request.onload=function(){
+ uA=new Uint8Array(this.response);
+ var p=8,row=null,p2=(uA[2]<<8|uA[3])-8,v3=0x159A55E5,v4=0x1F123BB5,v5=p2/4;
+ 
+ for(let i=0;i<v5;i++){
+  let v6=(v3<<16)+v4;
+
+  uA[p]=uA[p]^(v6>>0);
+  p++;
+  uA[p]=uA[p]^(v6>>8);
+  p++;
+  uA[p]=uA[p]^(v6>>16);
+  p++;
+  uA[p]=uA[p]^(v6>>24);
+  p++;
+
+  v3=((v3>>0x10)&0xFFFF)+(v3&0xFFFF)*0x9069;
+  v4=((v4>>0x10)&0xFFFF)+(v4&0xFFFF)*0x4650;}
+
+ v5=p2&3;
+ v3=(v3<<16)+v4;
+
+ for(let i=0;i<v5;i++){
+  uA[p]=uA[p]^(v3>>(i*8));
+  p++;}
+
+
+ for(let i=0;i<uA.length;i+=4){
+  let a=Array.from(uA.subarray(i,i+4));
+  if(!(i&15))row=tBody.insertRow(-1);
+  row.insertCell(-1).appendChild(document.createTextNode(a.map(byte=>byte.toString(16).padStart(2,'0')).join(' ')));
+  row.insertCell(-1).appendChild(document.createTextNode(String.fromCodePoint.apply(String,a.map(readable))));}};
+
+request.send();
+
+</script></body></html>

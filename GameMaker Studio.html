@@ -1,0 +1,55 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>GameMaker Studio</title>
+<style>
+body{
+ background-color: black;
+ color:white;
+ font-family: sans-serif;
+ text-align: center;}
+table{
+ border-width: 1px;
+ text-align: right;
+ width: -webkit-fill-available;}
+thead{ text-align: center;}
+</style><!--
+jp.co.ponos.korogarimasu/assets
+小端序
+4類型字串 FORM
+4大小blob
+
+TXTR
+ui子文件數=4
+[4:ui區塊位置] × 子文件數
+[4(0|1?),4(0?),4:ui圖片位置] × 子文件數
+[圖片+一堆零] × 子文件數
+--></head><body><input type="file" multiple><table><thead><tr><th>檔名/位置</th><th>類型</th><th>大小</th><th>數量</th></tr></thead><tbody></tbody></table><script>"use strict";
+const 輸入=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,section={'FORM':'Form','GEN8':'General','OPTN':'Options','LANG':'Language','EXTN':'Extensions','SOND':'Sounds','AGRP':'AudioGroup','SPRT':'Sprites','BGND':'Backgrounds','PATH':'Paths','SCPT':'Scripts','GLOB':'GLOB_Unk','SHDR':'Shaders','FONT':'Fonts','TMLN':'Timelines','OBJT':'Objects','ROOM':'Rooms','DAFL':'DataFiles','TPAG':'TexturePage','CODE':'Code','VARI':'Variables','FUNC':'Functions','STRG':'Strings','TXTR':'Textures','AUDO':'Audio'};
+
+var fileI,o,row,hue=Math.floor(Math.random()*360);
+
+String.fromCode=String.fromCodePoint||String.fromCharCode;
+function append(v){row.insertCell(-1).appendChild(document.createTextNode(v))}
+
+輸入.onchange=function(){if(this.files.length){
+fileI=0;
+reader.readAsArrayBuffer(this.files[0]);}}
+
+reader.onload=function(){
+let ty,tSize;
+o=0;
+while(o<輸入.files[fileI].size){
+ row=tBody.insertRow(-1);
+ append(o||輸入.files[fileI].name);
+ ty=String.fromCode.apply(String,new Uint8Array(this.result,o,4));
+ append(ty in section?section[ty]:ty);
+ append(tSize=new Uint32Array(this.result,o+=4,4)[0]);
+ if(ty!='FORM'&&tSize>0){
+  let tl=new Uint32Array(this.result,o+4,4)[0];
+  if(tl<tSize)append(tl);
+  o+=tSize;}
+ o+=4;
+ row.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,87.5%)';}
+if(++fileI<輸入.files.length)reader.readAsArrayBuffer(輸入.files[fileI]);
+}
+
+</script></body></html>

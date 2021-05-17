@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>GameMaker audiogroup</title>
+<style>
+body{background:black;color:white;text-align:center}
+</style><!--
+jp.co.ponos.korogarimasu/assets/audiogroup.dat
+小端序
+ 0 字串 FORM
+ 4 檔案大小±
+ 8 類型字串 AUDO
+12 類型大小±
+16 子文件數
+20 區塊位置 (可多組)
+24 區塊[子文件大小(不含紀錄大小的4bytes)+子文件] (可多組)
+--></head><body><input type="file" multiple><audio controls></audio>
+<script>
+var 輸入=document.getElementsByTagName('input').item(0),reader=new FileReader,fileI=new Number,cFile=new Array,cFileI=new Number,audio=document.getElementsByTagName('audio').item(0);
+
+輸入.onchange=function(){if(this.files.length){
+fileI=0;cFileI=cFile.length;
+reader.readAsArrayBuffer(this.files[0].size%4?this.files[0].slice(0,this.files[0].size-this.files[0].size%4):this.files[0]);
+}}
+
+reader.onload=function(){
+let ia=new Uint32Array(this.result),i,cfLength=ia[4];
+for(i=0;i<cfLength;i++)cFile.push(URL.createObjectURL(輸入.files[fileI].slice(ia[5+i]+4,ia[5+i]+4+ia[ia[5+i]/4])));
+if(++fileI<輸入.files.length)reader.readAsArrayBuffer(輸入.files[fileI].size%4?輸入.files[fileI].slice(0,輸入.files[fileI].size-輸入.files[fileI].size%4):輸入.files[fileI]);
+else{
+audio.src=cFile[cFileI];
+audio.play();
+}}
+
+audio.onended=function(){
+if(++cFileI==cFile.length)cFileI=0;
+audio.src=cFile[cFileI];
+audio.play();
+}
+
+</script></body></html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Corona</title>
+<style>
+body{ background-color:black; color:white; text-align:center}
+table{ width: -webkit-fill-available}
+</style></head><body><input type="file"><table border="1"><tbody></tbody></table><script>"use strict";
+
+const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var uA,o=0,hue=Math.floor(Math.random()*360);
+
+function read(){o+=4;return uA[o/4-1]};
+
+input.onchange=function(){if(this.files.length)reader.readAsArrayBuffer(this.files[0])};
+
+
+reader.onload=function(){
+uA=new Uint32Array(this.result);
+o=8;
+let indexSize=read(),fL=read(),offset,name,size,list=new Array,row,a;
+
+console.log('索引大小：'+indexSize);
+console.log('子文件數目：'+fL);
+
+for(let i=0;i<fL;++i){
+ o+=4;
+ offset=read();
+ name=decodeUTF8(this.result.slice(o+4,o=read()+o));
+ o+=4-o%4;
+ size=uA[offset/4+2];
+ list.push([offset,name,size]);}
+
+for(let i=0;i<fL;++i){
+ row=tBody.insertRow(-1);
+ row.insertCell(0).appendChild(document.createTextNode(i+1));
+ row.insertCell(1).appendChild(document.createTextNode(list[i][0]/*.toString(16)*/));
+ a=document.createElement('a');
+ a.appendChild(document.createTextNode(list[i][1]));
+ a.href=URL.createObjectURL(input.files[0].slice(list[i][0]+12,list[i][0]+12+list[i][2]));
+ a.download=list[i][1];
+ a.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,85%)';
+ row.insertCell(2).appendChild(a);
+ row.insertCell(3).appendChild(document.createTextNode(list[i][2]));
+ row.style.color='hsl('+hue+',100%,90%)';}
+}
+</script></body></html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>net hexage reaper NLS</title>
+<style>
+body{
+ background-color: black; color: white;
+ font-family: sans-serif;
+ text-align: center;}
+ol{
+ padding-inline-end: 40px;
+ text-align: justify;
+ white-space: pre-wrap;}
+</style></head><body><input type="file"><ol></ol><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),ol=document.getElementsByTagName('ol').item(0),reader=new FileReader,decoder=new TextDecoder('UTF-8');
+var dV,o=0,hue=Math.floor(Math.random()*360);
+
+input.onchange=function(){if(this.files.length)reader.readAsArrayBuffer(this.files[0]);}
+
+reader.onload=function(){
+let tl,li;
+dV=new DataView(this.result);
+document.title=dV.getUint16(0);
+o=2;
+while(o<input.files[0].size)if(tl=dV.getUint16((o+=2)-2)){
+li=document.createElement('li');
+li.appendChild(document.createTextNode(decoder.decode(new Uint8Array(this.result,o,tl))));
+li.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,75%)';
+ol.appendChild(li);
+o+=tl;
+}}
+</script></body></html>

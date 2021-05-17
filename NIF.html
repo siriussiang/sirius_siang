@@ -1,0 +1,87 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>NetImmerse File Format</title>
+<style>
+body{
+ background: black; color: white;
+ font-family: monospace;
+ text-align: justify;}
+td:nth-of-type(2){
+ white-space: nowrap;
+ word-break: keep-all;}
+td:nth-of-type(3){
+ white-space: pre-wrap;
+ word-break: break-all;}
+</style>
+</head><body><input type="file" accept=".nif,.kf"><table border="1"><thead><tr><th>位置</th></tr></thead><tbody></tbody></table><script src="zLib.js"></script><script>"use strict";
+
+const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var uA,dV,p=0,NetImmerse=new Object;
+
+
+function log(...cells){
+ let row=tBody.insertRow(-1);
+ for(let i of cells){
+  if(i===null||i==='')row.insertCell(-1);
+  else row.insertCell(-1).appendChild(document.createTextNode(i));}}
+
+input.onchange=function(){if(this.files.length){
+ let tgc=tBody.rows.length;
+ reader.readAsArrayBuffer(this.files[0].slice(864));
+ for(let i=0;i<tgc;i++)tBody.deleteRow(0);}}
+
+reader.onload=function(){
+ uA=ZLib.inflate(new Uint8Array(this.result));
+ dV=new DataView(uA.buffer);
+ p=0;
+ for(let i=0;i<header.length;i++){
+  let h=header[i],pn=h[0].replace(/\s+/g,'').replace(/^[A-Z]/,c=>c.toLowerCase()),cp=p;
+  if(h.length==2)NetImmerse[pn]=h[1]();
+  else NetImmerse[pn]=array(h[1],NetImmerse[h[2]]);
+  log(cp,h[0],NetImmerse[pn]);}}
+
+/* Part II */
+var liEn=true;
+
+function array(view,leng){
+ let arr=Array(leng);
+ for(let i=0;i<leng;++i)arr[i]=view();
+ return arr;}
+function bool(){return Boolean(uA[p++])}
+function byte(){return uA[p++]}
+function uInt(){return dV.getUint32((p+=4)-4,liEn)}
+function uLittle32(){return dV.getUint32((p+=4)-4,true)}
+function uShort(){return dV.getUint16((p+=2)-2,liEn)}
+function int(){return dV.getInt32((p+=4)-4,liEn)}
+function short(){return dV.getInt16((p+=2)-2,liEn)}
+function char(){return String.fromCharCode(uA[p++])}
+function float(){return dV.getFloat32((p+=4)-4,liEn)}
+function headerString(){
+ let sa=uA.subarray(p,p=uA.indexOf(0x0A));
+ p++;
+ return decodeUTF8(sa);}
+function endianType(){
+ let et=byte();
+ liEn=Boolean(et);
+ return ['ENDIAN_BIG','ENDIAN_LITTLE'][et];}
+function sizedString(){
+ let l=uInt();
+ return decodeUTF8(uA.subarray(p,p+=l));}
+
+var blockTypeIndex=short,fileVersion=uInt,flags=short;
+
+var header=[
+ ['Header String',headerString],
+ ['Version',uLittle32],
+ ['Endian Type',endianType],
+ ['User Version',uLittle32],
+ ['Num Blocks',uLittle32],
+ ['Num Block Types',uShort],
+ ['Block Types',sizedString,'numBlockTypes'],
+ ['Block Type Index',blockTypeIndex,'numBlocks'],
+ ['Block Size',uInt,'numBlocks'],
+ ['Num Strings',uInt],
+ ['Max String Length',uInt],
+ ['Strings',sizedString,'numStrings'],
+ ['Num Groups',uInt],
+ ['Groups',uInt,'numGroups']];
+</script></body></html>

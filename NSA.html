@@ -1,0 +1,188 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>NScripter Archive</title>
+<style>
+body{
+ background-color: black;
+ color: white;
+ font-family: sans-serif;
+ text-align: center;}
+#parentDir{
+ font-size: 24px;
+ border-bottom: 1px solid #c0c0c0;
+ margin-bottom: 10px;
+ padding-bottom: 10px;
+ white-space: nowrap;}
+.hide{
+ display: none;}
+table{
+ border-collapse: collapse;
+ margin-inline: auto;}
+thead{
+ text-align: center;}
+th{
+ cursor: pointer;}
+tbody{
+ text-align: start;}
+a,span{
+ color:lightgreen;}
+
+td.detailsColumn{
+ -webkit-padding-start: 2em;
+ text-align: end;
+ white-space: nowrap;}
+a.icon{
+ -webkit-padding-start: 1.5em;
+ text-decoration: none;}
+a.icon:hover,span:hover{
+ text-decoration: underline;}
+a.file{
+ background : url(file.png) left top no-repeat;}
+a.dir{
+ background : url(dir.png) left top no-repeat;}
+img{
+ max-width: 50%;}
+</style><!--
+arc.nsa (.dat?)
+大端序
+2:檔案數量
+4:首檔案開始處，也是檔頭大小(var base)
+[文字止0,1:壓縮種類,4:+base=檔案開始,4:檔案壓縮大小,4:檔案原本大小]:目錄 × 檔案數量
+檔案 × 檔案數量
+--></head><body><input type="file"/><div id="parentDir"></div><table><thead><tr id="header"><th>名稱</th><th class="detailsColumn">大小</th></tr></thead><tbody></tbody></table><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),box=document.getElementById('parentDir'),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8')),CompressionType={NONE:0,SPB:1,LZSS:2,NBZ:4};
+var uA,dV,o=0,arc=new Object,root=new Object,dirPath=null;
+
+var fileExt={
+ 'jpg':'image/jpeg',
+ 'mp3':'audio/mp3',
+ 'wav':'audio/wav',
+ /*'db'*/
+ 'png':'image/png',
+ 'ogg':'audio/ogg',
+ 'avi':'video/avi',
+ 'webm':'video/webm'}
+
+function createHref(ev){
+ let n=this.dataset.pn,ex=n.match(/[^\.]+$/)[0].toLowerCase();
+ this.href=URL.createObjectURL(ex in fileExt?input.files[0].slice(arc[n].loko,arc[n].loko+arc[n].cSize,fileExt[ex]):input.files[0].slice(arc[n].loko,arc[n].loko+arc[n].cSize));
+ delete this.dataset.pn;
+ this.onclick=null;}
+
+
+function changeDir(){
+ var p=root;
+ dirPath='';
+ if(this&&'dataset' in this&&'path' in this.dataset){
+  var pa=this.dataset.path.split('\\'),pda=[input.files[0].name.replace(/\.\w+$/,''),null];
+  while(pa.length){
+   let f=pa.shift();
+   p=p[f];
+   pda.push(f,dirPath+=f);
+   dirPath+='\\';}
+  while(box.hasChildNodes())box.removeChild(box.firstChild);
+  while(pda.length>2)addDir(pda.shift(),true,pda.shift());
+  addDir(pda[0],false);
+  box.classList.remove('hide');}
+ else box.classList.add('hide');
+
+ let fold=[],file=[];
+ while(tBody.rows.length)tBody.deleteRow(0);
+ for(let k in p)if(typeof p[k]=="object")fold.push(k);
+ else file.push(k);
+ fold.forEach(f=>addRow(f,f,true,0));
+ file.forEach(f=>addRow(f,p[f],false,arc[p[f]].size));}
+
+
+function addDir(name,link,url){
+ if(link){
+  link=box.appendChild(document.createElement('span'));
+  link.innerText=name;
+  if(url)link.dataset.path=url;
+  link.onclick=changeDir;
+  box.appendChild(document.createTextNode('/'));}
+ else box.lastChild.data+=name+'/';}
+
+
+function addRow(name,url,isdir,size){
+ var row=tBody.insertRow(-1),fileCell=row.insertCell(0),sizeString='';
+ if(isdir){
+  fileCell.innerText=name+"/";
+  fileCell.dataset.path=dirPath+url;
+  fileCell.onclick=changeDir;
+  fileCell.className='icon dir';
+  size=0;}
+ else{
+  if('link' in arc[url])fileCell.appendChild(arc[url].link);
+  else{
+   let link=fileCell.appendChild(document.createElement("a"));
+   link.innerText=name;
+   link.href='about:blank';
+   link.target='_blank';
+   link.dataset.pn=url;
+   link.onclick=createHref;
+   link.className="icon file";
+   arc[url].link=link;
+   /*link.draggable="true"; link.ondragstart=onDragStart;*/}
+  if(size<1024)sizeString=size.toLocaleString();
+  else if(size<0x100000)sizeString=Math.ceil(size/1024).toLocaleString()+'\u3385';
+  else sizeString=Math.ceil(size/0x100000).toLocaleString()+'\u3386';}
+ fileCell.dataset.value=name;
+
+ var cell=row.insertCell(1);
+ cell.className='detailsColumn';
+ cell.dataset.value=size;
+ if(!isdir)cell.innerText=sizeString;}
+
+
+function sortTable(){
+ var column=this.cellIndex,oldOrder=this.dataset.order||'1';
+ oldOrder=parseInt(oldOrder,10);
+ var newOrder=0-oldOrder;
+ this.dataset.order=newOrder;
+ var rows=tBody.rows,list=[],i;
+ for(i=0;i<rows.length;i++)list.push(rows[i]);
+ list.sort(function(row1,row2){
+  var a=row1.cells[column].dataset.value;
+  var b=row2.cells[column].dataset.value;
+  if(column){
+   a=parseInt(a,10);
+   b=parseInt(b,10);
+   return a>b?newOrder:a<b?oldOrder:0;}
+  /*Column 0 is text.*/
+  if(a>b)return newOrder;
+  if(a<b)return oldOrder;
+  return 0;});
+ /*Appending an existing child again just moves it.*/
+ for(i=0;i<list.length;i++)tBody.appendChild(list[i]);}
+
+var theads=document.getElementById("header").cells;
+theads[0].onclick=sortTable;
+theads[1].onclick=sortTable;
+
+
+input.onchange=function(){if(this.files.length){
+ reader.readAsArrayBuffer(this.files[0]);
+ document.title=this.files[0].name;}}
+
+reader.onload=function(){
+ uA=new Uint8Array(this.result);
+ dV=new DataView(this.result);
+ let fc=dV.getUint16(0),he=dV.getUint32(2),path,compType,loko,si,sp,img;
+ if(!fc||he<6+14*fc||he>input.files[0].size)return console.assert(fc&&he>6+14*fc&&he<input.files[0].size,input.files[0].name+' is not a NScripter Archive file.');
+ o=6;
+ for(let i=0;i<fc;i++){
+  path=decodeUTF8(uA.subarray(o,o=uA.indexOf(0,o)));
+  compType=uA[++o];
+  loko=dV.getUint32(++o);
+  si=dV.getUint32(o+=4);
+  sp=dV.getUint32(o+=4);
+  o+=4;
+  arc[path]={'loko':he+loko,'cSize':si,'size':sp};
+  let pa=path.replace(/\\{2,}/g,'\\').replace(/^\\/,'').split('\\'),p=root;
+  while(pa.length>1){
+   let f=pa.shift();
+   if(!(f in p))p[f]=new Object;
+   p=p[f];}
+  p[pa[0]]=path;}
+ changeDir();}
+</script></body></html>

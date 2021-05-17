@@ -1,0 +1,16 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<title>decompress Android backup file</title>
+<style>
+body{background:black;text-align:center;color:white}
+</style></head><body><input type="file" multiple accept=".ab"/><ol></ol><script src="zLib.js"></script><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),ol=document.getElementsByTagName('ol').item(0),reader=new FileReader;
+var fileI=0;
+
+input.onchange=function(){if(this.files.length)reader.readAsArrayBuffer(this.files[fileI=0])};
+
+reader.onload=function(){
+ let uA=ZLib.inflate(new Uint8Array(this.result,24)),link=ol.appendChild(document.createElement('li')).appendChild(document.createElement('a'));
+ link.href=URL.createObjectURL(new Blob([uA]));
+ link.appendChild(document.createTextNode(link.download=input.files[fileI].name.replace(/\.ab$/i,'').concat('.tar')));
+ if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI])};
+</script></body></html>

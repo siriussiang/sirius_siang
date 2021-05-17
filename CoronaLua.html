@@ -1,0 +1,136 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Corona & Lua</title>
+<style>
+body{
+ background-color:black;
+ color:white;
+ text-align:justify;
+ text-align-last:center}
+input{
+ text-align-last:initial}
+details>table{
+ text-align:center;
+ width:-webkit-fill-available}
+td[data-offset]{
+ cursor:pointer}
+td[data-offset]:hover{
+ text-decoration-line:underline}
+details+table{
+ margin-inline: auto;
+ text-align:start;
+ text-align-last:initial;}
+details{
+ text-align:start;
+ text-align-last:initial;}
+</style></head><body><input type="file" data-accept=".car,.lu,.lua"><details hidden open><table border="1"><tbody></tbody></table></details><table border="1"><tbody></tbody></table><script>"use strict";
+const input=document.getElementsByTagName('input').item(0),[carT,luaT]=document.getElementsByTagName('tbody'),detail=document.getElementsByTagName('details').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+var uA,o=0;/*for Corona*/
+var dV,p=0,lua=new Object,cp=p,liEn=false,lup=new Proxy(lua,{set:function(obj,prop,value){
+ obj[prop]=value;
+ log(prop,value);
+ return true}});/*for Lua*/
+var bo=0,cTgc=0,lTgc=0;/*for both*/
+
+function read(){o+=4;return uA[o/4-1]};
+
+function uInt(b){
+ cp=p;
+ p+=b;
+ switch(b){
+  case 1:return dV.getUint8(bo+cp);
+  case 2:return dV.getUint16(bo+cp,liEn);
+  case 4:return dV.getUint32(bo+cp,liEn);
+  case 8:return dV.getBigUint64(bo+cp,liEn)}}
+
+function log(...cells){
+ let row=luaT.insertRow(-1);
+ row.insertCell(0).appendChild(document.createTextNode(cp));
+ for(let i of cells){
+  if(i===null||i==='')row.insertCell(-1);
+  else row.insertCell(-1).appendChild(document.createTextNode(i));}}
+
+
+function readCar(){
+ uA=new Uint32Array(reader.result);
+ o=8;
+ let indexSize=read(),fL=read(),hue=Math.floor(Math.random()*360);
+
+ console.log('索引大小：'+indexSize);
+ console.log('子文件數目：'+fL);
+
+ for(let i=0;i<fL;++i){
+  o+=4;
+  let offset=read(),name=decodeUTF8(reader.result.slice(o+4,o=read()+o));
+  o+=4-o%4;
+  let size=uA[offset/4+2],row=carT.insertRow(-1);
+  row.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,93.75%)';
+  row.insertCell(0).appendChild(document.createTextNode(i+1));
+  row.insertCell(1).appendChild(document.createTextNode(offset));
+  let cell=row.insertCell(2);
+  cell.appendChild(document.createTextNode(name));
+  if(uA[offset/4+3]==0x61754C1B){
+   cell.dataset.offset=(offset+12).toString(16);
+   cell.onclick=onLuaSelect;
+   cell.style.color='hsl('+hue+',100%,87.5%)'};
+  row.insertCell(3).appendChild(document.createTextNode(size))};
+
+ for(let i=0;i<cTgc;i++)carT.deleteRow(0);
+ if(detail.hidden)detail.hidden=false}
+
+function onLuaSelect(){
+ cTgc=0;
+ lTgc=luaT.rows.length;
+ bo=parseInt(this.dataset.offset,16);
+ readLua()}
+
+
+function readLua(){
+ dV=new DataView(reader.result);
+ p=0;
+ liEn=false;
+
+ if(uInt(4)==0x1B4C7561)log('Magic Number','␛Lua');
+ else throw new TypeError('Magic Number');
+ lua.version=uInt(1);
+ log('Version',(lua.version>>4)+'.'+(lua.version&0xF));
+ log('Official',uInt(1)?'no':'yes');
+ liEn=Boolean(uInt(1)&1);
+ log('Endian',liEn?'little':'big');
+ p=10;
+ lup.nbl=uInt(1);/*number byte length*/
+ p=28;
+ lup.instructions=uInt(4);
+ p=32+lua.instructions*4;
+ lup.constants=uInt(4);
+
+ if(lua.constants)document.body.appendChild(document.createElement('hr'));
+ let hue=Math.floor(Math.random()*360);
+ for(let i=0;i<lua.constants;i++){
+  let type=uInt(1);
+  if(type==4){
+   if(document.body.lastChild.nodeName=='SPAN')document.body.appendChild(document.createTextNode('、'));
+   let sbl=uInt(4),span=document.body.appendChild(document.createElement('span'));
+   span.appendChild(document.createTextNode(decodeUTF8(new Uint8Array(reader.result,bo+p,sbl)).replace(/[\x00-\x09\x0B-\x1F\x7F]/g,c=>c=='\x7F'?'␡':String.fromCodePoint(c.codePointAt(0)+9216))));
+   p+=sbl;
+   span.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,93.75%)'}
+  else if(type==1)++p;
+  else if(type==3)p+=lua.nbl;
+  else if(type!=0){
+   console.log(type);
+   break}};
+ if(cTgc&&!detail.hidden)detail.hidden=true;
+ for(let i=0;i<lTgc;++i)luaT.deleteRow(0)};
+
+input.onchange=function(){if(this.files.length&&this.files[0].size>36){
+ cTgc=carT.rows.length;
+ lTgc=luaT.rows.length;
+ reader.readAsArrayBuffer(this.files[0])}};
+
+reader.onload=function(){
+ let f=new Uint32Array(this.result,0,1)[0];
+ if(f==0x1636172)readCar();
+ else if(f==0x61754C1B){
+  bo=0;
+  readLua()}
+ else throw new TypeError('Magic Number');}
+</script></body></html>
