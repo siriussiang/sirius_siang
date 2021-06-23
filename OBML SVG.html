@@ -56,6 +56,8 @@ var fileI=new Number,isDir,hue=Math.floor(Math.random()*360);
 
 if(typeof String.fromCodePoint!="function")String.fromCodePoint=String.fromCharCode;
 if(typeof String.prototype.codePointAt!="function")String.prototype.codePointAt=String.prototype.charCodeAt;
+Number.prototype.padStart=function(){
+ return this>15?this.toString(16):"0"+this.toString(16)};
 
 function read(l){
  if(l==2)return dV.getUint16((o+=2)-2);
@@ -64,8 +66,8 @@ function read(l){
 
 function readColor(){
  var 紅=uA[o++],綠=uA[o++],藍=uA[o++];
- if(!invert)return '#'.concat(紅.toString(16).padStart(2,'0'),綠.toString(16).padStart(2,'0'),藍.toString(16).padStart(2,'0')).toUpperCase();
- if(Math.max(紅,綠,藍)==Math.min(紅,綠,藍))return '#'.concat((255-紅).toString(16).padStart(2,'0').repeat(3)).toUpperCase();
+ if(!invert)return '#'.concat(紅.padStart(),綠.padStart(),藍.padStart()).toUpperCase();
+ if(Math.max(紅,綠,藍)==Math.min(紅,綠,藍))return '#'.concat((255-紅).padStart().repeat(3)).toUpperCase();
  紅/=255,綠/=255,藍/=255;
  var 大=Math.max(紅,綠,藍),小=Math.min(紅,綠,藍),和=大+小,差=大-小;
  var 紅Δ=紅/6/差,綠Δ=綠/6/差,藍Δ=藍/6/差,H,L=和/2,S=L<=1/2?差/和:差/(2-和);
