@@ -1,6 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>OBML Dirctory</title>
-<style>
+<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>OBML Dirctory</title><meta name="viewport" content="width=device-width"/><style>
 body{
  background-color: black; color: white;
  text-align: center;
@@ -11,16 +9,44 @@ td:nth-of-type(2){
  white-space: pre-wrap;}
 td:nth-of-type(3){
  white-space: nowrap;}
-</style></head><body><input type="file" multiple accept=".obml"><table><thead><tr><th>檔名</th><th>標題</th><th>大小</th><th>版本</th><th>？</th><th>圖示</th></tr></thead><tbody></tbody></table><script>
-const input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8'));
+</style></head><body><input type="file" multiple accept=".obml"><table><thead><tr><th><!--檔名-->FileName</th><th><!--圖示-->Icon</th><th><!--標題-->Title</th><th><!--大小-->Size</th><th><!--版本-->Version</th><th>？</th></tr></thead><tbody></tbody></table><script src="zLibNoHeaderForOBML.js"></script><script>
+/*const*/var input=document.getElementsByTagName('input').item(0),tBody=document.getElementsByTagName('tbody').item(0),reader=new FileReader,decodeUTF8=typeof TextDecoder=="function"?TextDecoder.prototype.decode.bind(new TextDecoder('UTF-8')):function(ba){
+ var out=new String;
+ for(var i=0;i<ba.length;++i)if(ba[i]>0xDF&&0x7F<ba[i+1]&&ba[i+1]<0xC0&&0x7F<ba[i+2]&&ba[i+2]<0xC0)out+=String.fromCharCode((ba[i]&0x1F)<<12|(ba[++i]&0x3F)<<6|(ba[++i]&0x3F));
+ else if(ba[i]>0xBF&&0x7F<ba[i+1]&&ba[i+1]<0xC0)out+=String.fromCharCode((ba[i]&0x1F)<<6|(ba[++i]&0x3F));
+ else out+=String.fromCharCode(ba[i]);
+ return out};
 var fileI=new Number,uA,o=0,row,hue=Math.floor(Math.random()*360);
 
+/*new icon*/
+var cv=/*typeof OffscreenCanvas!="function"?*/document.createElement('canvas'),ct=null,imgData=null,ctGetPx=document.createElement('canvas');
+ctGetPx.height=ctGetPx.width=1;
+(ctGetPx=ctGetPx.getContext('2d')).imageSmoothingQuality="high";
+/*-new icon*/ var KB=ctGetPx.measureText('㎅').width>=10?'㎅':"kB";
+
 function read(bl){
- let r=0;
+ var r=0;
  while(bl>0)r|=uA[o++]<<(--bl<<3);
  return r}
 
 function append(v){row.insertCell(-1).appendChild(document.createTextNode(v))}
+
+
+function fixLightness(ca){/*Input: Uint8Array, Output: CSSColorValue*/
+ if(ca[3]==0)return 'gainsboro';
+ var R=ca[0],G=ca[1],B=ca[2],cMax=Math.max(R,G,B),cMin=Math.min(R,G,B);
+ if(cMax+cMin>319)return '#'+R.toString(16).toUpperCase().padStart(2,"0")+G.toString(16).toUpperCase().padStart(2,"0")+B.toString(16).toUpperCase().padStart(2,"0");
+ if(cMax==cMin)return 'gainsboro';/*86%*/
+
+ R/=255;G/=255;B/=255;cMax/=255;cMin/=255;
+ var sum=cMax+cMin,diff=cMax-cMin,RΔ=R/6/diff,GΔ=G/6/diff,BΔ=B/6/diff,H=0,L=sum/2,S=diff/(L<=1/2?sum:2-sum);
+ switch(cMax){
+  case R:H=GΔ-BΔ;break;
+  case G:H=1/3+BΔ-RΔ;break;
+  case B:H=2/3+RΔ-GΔ};
+ if(H<0)H++;
+ return 'hsl('+Math.floor(360*H%360)+','+Math.round(S*100)+'%,80%)'};
+
 
 input.onchange=function(){fileI=0;if(this.files.length)reader.readAsArrayBuffer(this.files[0].slice(0,16400))}
 
@@ -28,25 +54,44 @@ reader.onload=function(){
  uA=new Uint8Array(this.result);
  row=tBody.insertRow(-1);
  o=0;
- let size=read(3),version=uA[o++];
+ var size=read(3),version=uA[o++];
  o=14;
- let titolo=decodeUTF8(uA.subarray(16,o=read(2)+o)),iconSize=read(2),cell;
- o+=iconSize; o=read(2)+o; o=read(2)+o;
+ var titolo=decodeUTF8(uA.subarray(16,o=read(2)+o)),iconSize=read(2),cell;
 
- if(size>=1024)size=Math.ceil(size/1024).toLocaleString()+'㎅';
+ if(iconSize){
+  var iconWidth=uA[o+1],iconHeight=uA[o+2],iconData=ZLib.inflate(uA.subarray(o+3,o+=iconSize));
+  if(cv.width!=iconWidth||cv.height!=iconHeight){
+   cv.width=iconWidth;
+   cv.height=iconHeight;
+   ct=cv.getContext('2d');
+   imgData=ct.createImageData(cv.width,cv.height)};
+  ct.clearRect(0,0,cv.width,cv.height);
+  ctGetPx.clearRect(0,0,1,1);
+  for(var i=0;i<iconData.length;i+=2){/*
+   A*/imgData.data[(i<<1)+3]=iconData[i]&0xF0|iconData[i]>>4;/*
+   R*/imgData.data[i<<1]=(iconData[i]&0xF)<<4|iconData[i]&0xF;/*
+   G*/imgData.data[i<<1|1]=iconData[i+1]&0xF0|iconData[i+1]>>4;/*
+   B*/imgData.data[(i<<1)+2]=(iconData[i+1]&0xF)<<4|iconData[i+1]&0xF};
+  ct.putImageData(imgData,0,0);
+  ctGetPx.drawImage(cv,0,0,cv.width,cv.height,0,0,1,1)};
+
+ o=read(2)+o;
+ o=read(2)+o;
+
+ if(size>=1024)size=Math.ceil(size/1024).toLocaleString()+KB;
  else size=size.toLocaleString();
 
  append(input.files[fileI].name.replace(/\.obml$/i,''));
+ if(iconSize)row.insertCell(1).appendChild(document.createElement('img')).src=cv.toDataURL();
+ else row.insertCell(1);
  append(titolo);
  append(size);
  append(version);
  append(uA[o]);
- if(iconSize)append(iconSize);
- else row.insertCell(-1);
  row.title=input.files[fileI].lastModifiedDate.toLocaleString();
- row.style.color='hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,90%)';
+ row.style.color=iconSize?fixLightness(ctGetPx.getImageData(0,0,1,1).data):'hsl('+(hue=Math.floor(hue+30+Math.random()*300)%360)+',100%,90%)';
 
  if(++fileI<input.files.length)reader.readAsArrayBuffer(input.files[fileI].slice(0,16400))}
 
-if(input.files.length)input.onchange();
+if(input.files.length)input.onchange()
 </script></body></html>
