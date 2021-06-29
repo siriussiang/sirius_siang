@@ -58,6 +58,10 @@ if(typeof String.fromCodePoint!="function")String.fromCodePoint=String.fromCharC
 if(typeof String.prototype.codePointAt!="function")String.prototype.codePointAt=String.prototype.charCodeAt;
 Number.prototype.padStart=function(){
  return this>15?this.toString(16):"0"+this.toString(16)};
+if(typeof String.prototype.repeat!="function")String.prototype.repeat=function(count){
+ var str=this;
+ while(--count>0)str+=this;
+ return str};
 
 function read(l){
  if(l==2)return dV.getUint16((o+=2)-2);
