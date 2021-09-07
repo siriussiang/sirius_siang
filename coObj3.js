@@ -159,35 +159,41 @@ fr.onload=function(){try{
 
   function skipToLeft(p){
    var c=null;
-   --p;
-   while(p>0&&((c=s.charCodeAt(p))==0x20||c==0xA||c==0xD||c==0x9))--p;
+   do --p;
+   while(p>0&&((c=s.charCodeAt(p))==0x20||c==0xA||c==0xD||c==0x9));
    return p};
   function skipToRight(p){
    var c=null;
    while(p<s.length&&((c=s.charCodeAt(p))==0x20||c==0xA||c==0xD||c==0x9))++p;
    return p};
+  function resolv(i){
+   return s.substring(needD&&s.charAt(l)!="}"?l-1:l,i)};
   /*"l" means "last";
     "rs" means resultString
-    "c" for character*/
-  var rs="",pos=null;
+    "c" for character
+    "needD" delimiter,is comma cut*/
+  var rs="",pos=null,needD=false;
   l=0;
   for(i1=0;pos=indA[i1];++i1)if("beforeToken" in pos){
    i=skipToLeft(pos.beforeToken);
-   if(i<=l){
-    if((c=s.charAt(i=skipToRight(pos.end)))==",")l=i+1;
-    else if(c=="}")l=i}
-   else if((c=s.charAt(i))=="{"){
-    rs+=s.substring(l,i+1);
-    if((c=s.charAt(i=skipToRight(pos.end)))==",")l=i+1;
-    else if(c=="}")l=i}
-   else if(c==","){
-    if(i!=l)rs+=s.substring(l,i);
-    l=skipToRight(pos.end)}}
+   if(i>l){
+    if((c=s.charAt(i))=="{"){
+     rs+=resolv(i+1);
+     needD=false}
+    else if(c==","){
+     rs+=resolv(i);
+     needD=true}
+    else console.error(i,c)};
+
+   if((c=s.charAt(i=skipToRight(pos.end)))==",")l=i+1;
+   else if(c=="}")l=i
+   else console.error(i,c)}
   else{
-   rs+=s.substring(l,pos.start)+"null";
+   rs+=resolv(pos.start)+"null";
+   needD=false;
    l=pos.end};
 
-  rs+=s.substring(l);
+  rs+=s.substring(needD&&s.charAt(l)!="}"?l-1:l);
 
   for(ri=0;sou=souA[ri];ri++){/*
    rs+=";\n";
