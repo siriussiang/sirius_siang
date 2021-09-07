@@ -186,7 +186,7 @@ fr.onload=function(){try{
     else console.error(i,c)};
 
    if((c=s.charAt(i=skipToRight(pos.end)))==",")l=i+1;
-   else if(c=="}")l=i
+   else if(c=="}")l=i;
    else console.error(i,c)}
   else{
    rs+=resolv(pos.start)+"null";
