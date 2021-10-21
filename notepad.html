@@ -1,0 +1,17 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<!--link rel="icon" href="https://lh3.googleusercontent.com/rUQiDwvbuDWScMS8s8TVv9ubthDSCoINfaRYsoCiPb37gaLnw5LWBEM5jm8h_lZ74es"-->
+<title>筆記本</title>
+<style>
+body{background-image:radial-gradient(#0008,#000C),linear-gradient(to right,#0000ff80,#ffffff80,#ff000080),linear-gradient(to bottom,red,orange,yellow,green,royalblue,violet);height:calc(100vh - 16px);text-align:center}
+textarea{background-color:transparent;width:-webkit-fill-available;height:-webkit-fill-available;font-size:XX-large;color:white;caret-color:-webkit-focus-ring-color;line-height:150%}
+</style></head><body><textarea placeholder="⊙ω⊙" autofocus></textarea><script>"use strict";
+const textarea=document.getElementsByTagName('textarea').item(0),bc=new BroadcastChannel('liveHTML');
+document.onvisibilitychange=function(){
+ if(document.visibilityState=='hidden'){
+  if(/<title[^<>]*>.+<\/title>/.test(textarea.value))document.title=textarea.value.match(/<title[^<>]*>(.+)<\/title>/)[1]+' - 編輯中';
+  else{
+   if(/\S/.test(textarea.value))document.title=textarea.value.match(/\S+.*/m)[0];
+   else document.title='記事本';}}}
+bc.onmessage=function(e){
+ if(e.data=='requestHTML'&&/<!DOCTYPE html>/i.test(textarea.value))bc.postMessage(textarea.value);}
+</script></body></html>
